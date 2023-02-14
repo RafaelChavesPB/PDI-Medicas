@@ -1,4 +1,5 @@
 from image import MyImage
 
-img = MyImage('pic.jpeg')
+img = MyImage('beach.jpg')
 img.load()
+
