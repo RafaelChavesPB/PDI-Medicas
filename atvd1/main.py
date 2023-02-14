@@ -1,4 +1,4 @@
 from image import MyImage
 
-img = MyImage('atvd1.png')
+img = MyImage('pic.jpeg')
 img.load()
