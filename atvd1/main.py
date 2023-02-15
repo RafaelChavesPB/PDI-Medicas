@@ -1,5 +1,6 @@
 from image import MyImage
 
 img = MyImage('beach.jpg')
-img.load()
+img.getSingleColorImageFile([0, 1, 2, 3])
+
 
