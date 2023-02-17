@@ -1,4 +1,5 @@
 import cv2 as cv
+from numpy import zeros, int_
 from copy import deepcopy as dpcp
 
 class MyImage:
@@ -71,12 +72,12 @@ class MyImage:
         bgr: list of 3 integers. Each element should be an integer between 0 and 255, representing the blue,
         green, and red color values of a pixel in the image.
 
-        returns: a list with a single float representing the corresponding grayscale value.
+        returns: a rounded single float representing the corresponding grayscale value.
         """
         R = bgr[2]
         G = bgr[1]
         B = bgr[0]
-        return 0.2989 * R + 0.5870 * G + 0.1140 * B
+        return round(0.2989 * R + 0.5870 * G + 0.1140 * B)
 
     def getOnlyColor(self, color):
         """
@@ -87,9 +88,9 @@ class MyImage:
         if color < 0 or color > 2:
             return self.getOnlyGrayImage()
 
-         # Make a deep copy of the original matrix to avoid modifying the original image
-        m = dpcp(self.matrix) 
-
+        # Make a copy of the original matrix to avoid modifying the original image
+        m = dpcp(self.matrix)
+ 
         # Loop over all the pixels in the matrix and set all color components except the specified one to zero
         for idx in [0, 1, 2]:
             if idx == color:
@@ -101,14 +102,15 @@ class MyImage:
         """
          Returns a color matrix with the value of BGR components turned into a single, balanced grayscale value. 
         """
-        # Make a deep copy of the original matrix to avoid modifying the original image
-        m = dpcp(self.matrix)
+        # Create a matrix full of zeros with shape identical to the original matrix to avoid modifying the original image
+        m = zeros((len(self.matrix), len(self.matrix[0]), 1), dtype=int_)
 
         # Loop over all the pixels in the matrix and calculate their grayscale value
         for i in range(len(m)):
             for j in range(len(m[i])):
                 # Call the getGrayValue method to calculate the balanced grayscale value
-                m[i, j] = self.getGrayValue(m[i, j])  
+                m[i, j] = self.getGrayValue(self.matrix[i, j])
+
         return m
     
     def getOnlyBlueImage(self):
@@ -122,3 +124,6 @@ class MyImage:
     def getOnlyRedImage(self):
         """Returns color matrix with blue and green components of all pixels zeroed"""
         return self.getOnlyColor(2)
+
+    def size(self):
+        print(len(self.matrix), "X", len(self.matrix[0]))
