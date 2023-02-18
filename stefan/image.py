@@ -1,5 +1,5 @@
 import cv2 as cv
-from numpy import zeros, int_
+import numpy as np
 from copy import deepcopy as dpcp
 
 class MyImage:
@@ -35,6 +35,10 @@ class MyImage:
         self.green = None # variable to store the green color image
         self.red = None # variable to store the red color image
         self.gray = None # variable to store the grayscale image
+        self.gradientMagnitude = None # variable to store how abruptly the pixels itensity changes from one to another
+        self.meanGradientMagnitude = None # variable to store the mean of gradient magnitude
+        self.rmsGradientMagnitude = None # variable to store the rms value of gradient magnitude
+        self.stdvGradientMagnitude = None # variable to store the standard deviation value of gradient magnitude
 
     def getSingleColorImageFile(self, want : list):
         """
@@ -77,7 +81,7 @@ class MyImage:
         R = bgr[2]
         G = bgr[1]
         B = bgr[0]
-        return round(0.2989 * R + 0.5870 * G + 0.1140 * B)
+        return np.float32(0.2989 * R + 0.5870 * G + 0.1140 * B)
 
     def getOnlyColor(self, color):
         """
@@ -103,8 +107,8 @@ class MyImage:
          Returns a color matrix with the value of BGR components turned into a single, balanced grayscale value. 
         """
         # Create a matrix full of zeros with shape identical to the original matrix to avoid modifying the original image
-        m = zeros((len(self.matrix), len(self.matrix[0]), 1), dtype=int_)
-
+        m = np.zeros((len(self.matrix), len(self.matrix[0])), dtype=np.float32)
+        
         # Loop over all the pixels in the matrix and calculate their grayscale value
         for i in range(len(m)):
             for j in range(len(m[i])):
@@ -127,3 +131,36 @@ class MyImage:
 
     def size(self):
         print(len(self.matrix), "X", len(self.matrix[0]))
+
+    def spatialInfo(self):
+        """
+        This method calculates the standard deviation of the gradient magnitude of an image.
+        It first checks if the grayscale image is available, and if not, it obtains it.
+        Then it calculates the horizontal and vertical gradients of the image using Sobel operators.
+        The magnitude of the gradient is calculated as the square root of the sum of the squares of the horizontal and vertical gradients. 
+        The mean and root mean squared values of the gradient magnitude are calculated, followed by the standard deviation of the gradient magnitude.
+        Finally, returns the standard deviation of the gradient magnitude.
+        """
+        # Check if the grayscale image is already available, otherwise obtain it
+        if self.gray is None:
+            self.gray = self.getOnlyGrayImage()
+
+        # Calculate the horizontal (x) gradient of the image
+        derivative_x = cv.Sobel(self.gray, cv.CV_64F, 1, 0, ksize=1)
+
+        # Calculate the vertical (y) gradient of the image
+        derivative_y = cv.Sobel(self.gray, cv.CV_64F, 0, 1, ksize=1)
+
+        # Calculate the magnitude of the gradient of the image
+        self.gradientMagnitude = gradient_magnitude = np.sqrt(np.square(derivative_x) + np.square(derivative_y))
+
+        # Calculate the mean of the gradient magnitude
+        self.meanGradientMagnitude = mean_gradient_magnitude = np.sum(gradient_magnitude) / (gradient_magnitude.shape[0] * gradient_magnitude.shape[1])
+
+        # Calculate the root mean squared of the gradient magnitude
+        self.rmsGradientMagnitude = root_mean_squared_gradient_magnitude = np.sqrt(np.sum(gradient_magnitude ** 2) / (gradient_magnitude.shape[0] * gradient_magnitude.shape[1]))
+
+        # Calculate the standard deviation of the gradient magnitude
+        self.stdvGradientMagnitude = gradient_magnitude_std_deviation = np.sqrt(np.sum(gradient_magnitude ** 2 - mean_gradient_magnitude ** 2) / (gradient_magnitude.shape[0] * gradient_magnitude.shape[1]))
+
+        return gradient_magnitude_std_deviation
