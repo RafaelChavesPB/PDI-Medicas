@@ -26,13 +26,15 @@ int main(int argc, char **argv)
 {
     std::string path(argv[1]);
     std::string filename(argv[2]);
+    double low = std::stod(argv[3]);
+    double high = std::stod(argv[4]);
     std::string prefix("../generated/");
     Mat image = imread(path + filename, IMREAD_GRAYSCALE);
-    Mat gamma0_5, gamma2_0;
-    changeImageGamma(image, gamma0_5, 0.5);
-    changeImageGamma(image, gamma2_0, 2);
+    Mat lowGamma, highGamma;
+    changeImageGamma(image, lowGamma, low);
+    changeImageGamma(image, highGamma, high);
     imwrite(prefix + filename, image);
-    imwrite(prefix + std::string("gamma0_5.jpg"), gamma0_5);
-    imwrite(prefix + std::string("gamma2_0.jpg"), gamma2_0);
+    imwrite(prefix + std::string("lowGamma.jpg"), lowGamma);
+    imwrite(prefix + std::string("highGamma.jpg"), highGamma);
     return 0;
 }
