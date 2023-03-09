@@ -2,6 +2,72 @@ import cv2 as cv
 import numpy as np
 from copy import deepcopy as dpcp
 
+
+
+class MyPixel:
+    direction = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, -1), (-1, 1)]
+    def __init__(self, y, x, matrix, **kwargs):
+        adjtype = kwargs.get("adjtype", 8)
+        if not isinstance(adjtype, int) or (adjtype != 4 and adjtype != 8):
+            adjtype = 8
+        
+        self.y = y
+        self.x = x
+        self.matrix = matrix
+        self.adjtype = adjtype
+        self.adj = self.getAdjacentPixels()
+        self.adjComponentValues = self.getAdjComponentValues()
+    
+    def getAdjacentPixels(self):
+        adj = []
+        leny, lenx = self.matrix.shape[:2] 
+        for idx, d in enumerate(self.direction):
+            if idx == self.adjtype:
+                break
+            adjy, adjx = self.y + d[0], self.x + d[1]
+            if(adjx >= lenx or adjx < 0 or adjy >= leny or adjy < 0):
+                continue
+            adj.append((adjy, adjx))
+        return adj
+
+    def getAdjComponentValues(self):
+        dic = {}
+        if len(self.matrix.shape) == 2:
+            dic['gray'] = [self.matrix[self.y][self.x]]
+            for viz in self.adj:
+                dic['gray'].append(self.matrix[viz[0]][viz[1]])
+        else:
+            dic['blue'] = [self.matrix[self.y][self.x][0]]
+            dic['green'] = [self.matrix[self.y][self.x][1]]
+            dic['red'] = [self.matrix[self.y][self.x][2]]
+            for viz in self.adj:
+                dic['blue'].append(self.matrix[viz[0]][viz[1]][0])
+                dic['green'].append(self.matrix[viz[0]][viz[1]][1])
+                dic['red'].append(self.matrix[viz[0]][viz[1]][2])
+        return dic
+
+    def changePixelComponentByMethod(self, method : callable):
+        self.matrix[self.y, self.x, 0] = round(method(self.adjComponentValues['blue']), 1)
+        self.matrix[self.y, self.x, 1] = round(method(self.adjComponentValues['green']), 1)
+        self.matrix[self.y, self.x, 2] = round(method(self.adjComponentValues['red']), 1)
+
+
+    def mode(lst):
+        # Create a dictionary to count the frequency of each number in the list
+        freq = {}
+        for num in lst:
+            if num in freq:
+                freq[num] += 1
+            else:
+                freq[num] = 1
+        
+        # Find the number with the highest frequency
+        max_freq = max(freq.values())
+        modes = [num for num, frequency in freq.items() if frequency == max_freq]
+        
+        return max(modes)
+
+
 class MyImage:
     """
     A custom class for working with images.
@@ -39,6 +105,7 @@ class MyImage:
         self.meanGradientMagnitude = None # variable to store the mean of gradient magnitude
         self.rmsGradientMagnitude = None # variable to store the rms value of gradient magnitude
         self.stdvGradientMagnitude = None # variable to store the standard deviation value of gradient magnitude
+        self.lastResizedMatrix = None
 
     def getSingleColorImageFile(self, want : list):
         """
@@ -81,7 +148,7 @@ class MyImage:
         R = bgr[2]
         G = bgr[1]
         B = bgr[0]
-        return np.float32(0.2989 * R + 0.5870 * G + 0.1140 * B)
+        return np.uint8(round(0.2989 * R + 0.5870 * G + 0.1140 * B, 1))
 
     def getOnlyColor(self, color):
         """
@@ -107,7 +174,7 @@ class MyImage:
          Returns a color matrix with the value of BGR components turned into a single, balanced grayscale value. 
         """
         # Create a matrix full of zeros with shape identical to the original matrix to avoid modifying the original image
-        m = np.zeros((len(self.matrix), len(self.matrix[0])), dtype=np.float32)
+        m = np.zeros((len(self.matrix), len(self.matrix[0])), dtype=np.uint8)
         
         # Loop over all the pixels in the matrix and calculate their grayscale value
         for i in range(len(m)):
@@ -130,6 +197,7 @@ class MyImage:
         return self.getOnlyColor(2)
 
     def size(self):
+        """Return size of image based in matrix obtained"""
         print(len(self.matrix), "X", len(self.matrix[0]))
 
     def spatialInfo(self):
@@ -164,3 +232,84 @@ class MyImage:
         self.stdvGradientMagnitude = gradient_magnitude_std_deviation = np.sqrt(np.sum(gradient_magnitude ** 2 - mean_gradient_magnitude ** 2) / (gradient_magnitude.shape[0] * gradient_magnitude.shape[1]))
 
         return gradient_magnitude_std_deviation
+
+    def resize(self, x_mult, y_mult, method : callable, **kwargs):
+        """
+        The `resize` method resizes the image matrix of the object that called it. 
+        It takes as input the scaling factors in the x and y directions (x_mult and y_mult, respectively), 
+        a callable method to adjust the pixel values (method), 
+        and optional parameters to specify when to apply the adjustment (before and after)
+        and the adjacency (4 or 8 neighbors) type (adjtype).
+
+        Parameters:
+            x_mult (float): scaling factor in the x direction
+            y_mult (float): scaling factor in the y direction
+            method (callable): method to adjust the pixel values
+            before (bool, optional): apply the adjustment before the resizing (default False)
+            after (bool, optional): apply the adjustment after the resizing (default False)
+            adjtype (int, optional): adjacency type (4 or 8) (default 8)
+
+        Returns:
+            numpy.ndarray: the resized matrix
+
+        The method first checks and sets the optional parameters (before, after, and adjtype). 
+        It then calculates the new dimensions of the resized matrix based on the scaling factors 
+        and creates a new matrix of zeros with the new dimensions and three channels.
+
+        For each pixel in the new matrix, the corresponding pixel in the original matrix is determined based on the scaling factors. 
+        If the 'before' parameter is set to True, 
+        a new Pixel object is created for the corresponding pixel in the original matrix 
+        and the pixel values are adjusted using the specified method. 
+        Otherwise, the pixel values are copied directly from the corresponding pixel in the original matrix. 
+
+        If the 'after' parameter is set to True, 
+        each pixel in the resized matrix is again adjusted using the specified method.
+
+        Finally, the resized matrix is stored in the `lastResizedMatrix` attribute of the object and returned.
+
+        Note:
+            This method assumes that the input matrix has three channels (e.g., BGR). 
+            If the input matrix has a different number of channels, 
+            the behavior of the method is undefined.
+        """
+
+        # check and set optional paramenters
+        before = kwargs.get('before', False)
+        after = kwargs.get('after', False)
+        adjtype = kwargs.get('adjtype', 8)
+        before = bool(before)
+        after = bool(after)
+        adjtype = 4 if adjtype == 4 else 8 
+
+        height, width = self.matrix.shape[:2]
+
+        # calculate new size of image
+        newh = int(round(height * x_mult))
+        neww = int(round(width * y_mult))
+
+        # matrix object to be filled
+        m = np.zeros((newh, neww, 3), dtype=np.uint8)
+        
+        for i in range(len(m)):
+            for j in range(len(m[i])):
+                eqv_i, eqv_j = int(i / x_mult), int(j / y_mult)
+                if before:
+                    p = MyPixel(eqv_i, eqv_j, self.matrix, adjtype=adjtype)
+                    m[i, j, 0] = method(p.adjComponentValues['blue'])
+                    m[i, j, 1] = method(p.adjComponentValues['green'])
+                    m[i, j, 2] = method(p.adjComponentValues['red'])
+
+                else:
+                    m[i, j] = [*self.matrix[eqv_i, eqv_j]]
+        
+        if after:
+            for i in range(len(m)):
+                for j in range(len(m[i])):
+                    p = MyPixel(i, j, m)
+                    p.changePixelComponentByMethod(method)
+
+        self.lastResizedMatrix = m
+        return m
+
+    def writeLastResizedMatrix(self, filename):
+        cv.imwrite(filename, self.lastResizedMatrix)

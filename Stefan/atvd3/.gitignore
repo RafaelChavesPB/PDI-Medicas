@@ -1,0 +1,10 @@
+CMakeFiles
+.vscode
+media
+CMakeCache.txt
+*.cmake
+Makefile
+numero
+atvd3
+*.jpg
+*.jpeg
