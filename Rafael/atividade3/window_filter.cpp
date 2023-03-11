@@ -10,8 +10,11 @@ void window_filter(Mat &src, Mat &dst, int lower, int upper)
     {
         for (int j = 0; j < dst.cols; j++)
         {
-            if(dst.at<uchar>(i, j) > upper or dst.at<uchar>(i, j) < lower)
+            uchar pixel = dst.at<uchar>(i, j);
+            if(pixel > upper or pixel < lower)
                 dst.at<uchar>(i, j) = 255;
+            // else 
+            //     dst.at<uchar>(i, j) = 0;
         }
     }
 }
