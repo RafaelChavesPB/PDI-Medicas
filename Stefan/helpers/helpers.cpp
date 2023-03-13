@@ -86,3 +86,27 @@ cv::Mat getBinarizedImage(cv::Mat &img, int threshold, bool inv){
     return binary_img;
 }
 
+unsigned char getGrayValueFromBGRPixel(cv::Vec3b pixel, bool mean = false){
+    if(mean){
+        uint16_t sum = 0;
+        for(int i = 0; i < 3; i++) sum += pixel[i];
+        return static_cast<uchar>(sum / 3);
+    }
+    return static_cast<uchar>(0.299 * pixel[2] + 0.587 * pixel[1] + 0.114 * pixel[0]);
+}
+
+double calculateSpatialInfo(cv::Mat imgGrayscale){
+    cv::Mat sh, sv;
+    cv::Sobel(imgGrayscale, sh, CV_64F, 1, 0, 1); // horizontal gradient (x)
+    cv::Sobel(imgGrayscale, sv, CV_64F, 0, 1, 1); // vertical gradient (y)
+
+    cv::Mat SIr; // gradient magnitude
+    cv::sqrt(sh.mul(sh) + sv.mul(sv), SIr);
+
+    double SIrSum = cv::sum(SIr)[0];
+    double SIrMean = SIrSum / (SIr.rows * SIr.cols); // mean of gradient magnitude
+    double SIrRms = std::sqrt(cv::sum(SIr.mul(SIr))[0] / (SIr.rows * SIr.cols)); // rms value of gradient magnitude
+    double SIrStdev = std::sqrt(cv::sum(SIr.mul(SIr) - SIrMean * SIrMean)[0] / (SIr.rows * SIr.cols)); // stdev of grad. mag.
+
+    return SIrStdev; // return stdev of gradient magnitude
+}

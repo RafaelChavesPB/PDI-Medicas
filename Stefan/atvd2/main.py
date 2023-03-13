@@ -1,6 +1,6 @@
 from sys import path
 path.append('..')
-from image import MyImage, MyPixel
+from class_image import MyImage, MyPixel
 import numpy as np
 import cv2 as cv
 

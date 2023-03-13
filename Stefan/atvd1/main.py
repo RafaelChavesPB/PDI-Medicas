@@ -1,6 +1,6 @@
 from sys import path
 path.append('..')
-from image import MyImage
+from class_image import MyImage
 
 img = MyImage('../images/beach.jpg')
 img.getSingleColorImageFile([0,1,2])
