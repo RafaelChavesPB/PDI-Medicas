@@ -119,7 +119,7 @@ namespace pdi
         }
     }
 
-    void filterHue(cv::Mat &src, cv::Mat *dst, std::pair<int,int> *ranges)
+    void filterHue(cv::Mat &src, cv::Mat *dst, std::pair<int, int> *ranges)
     {
         for (int k = 0; k < sizeof(ranges) / sizeof(int); k++)
         {
@@ -129,8 +129,22 @@ namespace pdi
                 for (int j = 0; j < src.cols; j++)
                 {
                     uchar hue = src.at<cv::Vec3b>(i, j)[0];
-                    dst[k].at<uchar>(i, j) = ranges[k].first < hue and hue <= ranges[k].first? 255: 0;
+                    dst[k].at<uchar>(i, j) = ranges[k].first < hue and hue <= ranges[k].first ? 255 : 0;
                 }
+            }
+        }
+    }
+
+    void getColorRange(cv::Mat &src, cv::Mat &dst, int start, int end)
+    {
+        dst = src.clone();
+        for (int i = 0; i < dst.rows; i++)
+        {
+            for (int j = 0; j < dst.cols; j++)
+            {
+                uchar color = dst.at<cv::Vec3b>(i, j)[0];
+                uchar instensity = dst.at<cv::Vec3b>(i, j)[2];
+                dst.at<cv::Vec3b>(i, j)[2] = start <= color and color < end ? instensity : 0;
             }
         }
     }
