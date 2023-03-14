@@ -47,8 +47,10 @@ int main(int argc, char** argv){
         
         ////////////////////////////// HSV Images //////////////////////////////////
         // Converting image
-        cv::Mat hsv_img;
+        cv::Mat hsv_img, hsv_channel[3];
         cv::cvtColor(image, hsv_img, cv::COLOR_BGR2HSV);
+        cv::split(hsv_img, hsv_channel);
+
         
         // int maxval = -1;
         // for(int i = 0; i < hsv_img.rows; i++){
@@ -66,6 +68,10 @@ int main(int argc, char** argv){
         createFolder(path.c_str());
 
         cv::imwrite(path + "/ORIG_hsv.png", hsv_img);
+        cv::imwrite(path + "/HUE_hsv.png", hsv_channel[0]);
+        cv::imwrite(path + "/SATURATION_hsv.png", hsv_channel[1]);
+        cv::imwrite(path + "/VALUE_hsv.png", hsv_channel[2]);
+
 
         ///////////////////////////// Color Images //////////////////////////////////
         // Folder for color processing
