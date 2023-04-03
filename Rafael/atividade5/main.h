@@ -148,42 +148,6 @@ namespace pdi
             }
         }
     }
-
-    void applyBlurSection(cv::Mat &src, int y, int x, int n_y, int n_x)
-    {
-        int sum = 0;
-        int cont = 0;
-        for (int i = y; i < y + n_y; i++)
-        {
-            for (int j = x; j < x + n_x; j++)
-            {
-                cont++;
-                sum += src.at<uchar>(i, j);
-            }
-        }
-
-        int mean = sum / cont;
-        for (int i = y; i < y + n_y; i++)
-        {
-            for (int j = x; j < x + n_x; j++)
-            {
-                src.at<uchar>(i, j) = mean;
-            }
-        }
-    }
-
-    void applyBlurGrid(cv::Mat &src, cv::Mat &dst, int n)
-    {
-        // It does what you think its does
-        dst = src.clone();
-        for (int i = 0; i < dst.rows; i += n)
-        {
-            for (int j = 0; j < dst.cols; j += n)
-            {
-                applyBlurSection(dst, i, j, std::min(n, dst.rows - i), std::min(n, dst.cols - j));
-            }
-        }
-    }
 }
 
 namespace treat
