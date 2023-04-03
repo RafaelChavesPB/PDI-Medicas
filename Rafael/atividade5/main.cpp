@@ -21,24 +21,24 @@ int main(int argc, char **argv)
         
         // Blured Image
         cv::Mat blurred;
-        pdi::applyBlurGrid(src, blurred, 8);
+        filter::applyFilterGrid(src, blurred, filter::blur, BLUR_SIZE);
         cv::imwrite(prefix + image_name + std::string("/blurred.jpg"), blurred);
         std::cout << "Blurred ... Done" << std::endl;
 
         // Sobel without Blur
         cv::Mat sobel_x, sobel_y, sobel;
-        edge::applyFilterGrid(src, sobel_x, edge::sobel_x, SOBEL_SIZE);
+        filter::applyFilterGrid(src, sobel_x, filter::sobel_x, SOBEL_SIZE);
         cv::imwrite(prefix + image_name + std::string("/sobel_x.jpg"), sobel_x);
-        edge::applyFilterGrid(src, sobel_y, edge::sobel_y, SOBEL_SIZE);
+        filter::applyFilterGrid(src, sobel_y, filter::sobel_y, SOBEL_SIZE);
         cv::imwrite(prefix + image_name + std::string("/sobel_y.jpg"), sobel_y);
         sobel = sobel_x + sobel_y;
         cv::imwrite(prefix + image_name + std::string("/sobel.jpg"), sobel);
         std::cout << "Sobel without blur ... Done" << std::endl;
 
         // Sobel with Blur
-        edge::applyFilterGrid(blurred, sobel_x, edge::sobel_x, SOBEL_SIZE);
+        filter::applyFilterGrid(blurred, sobel_x, filter::sobel_x, SOBEL_SIZE);
         cv::imwrite(prefix + image_name + std::string("/sobel_x_blur.jpg"), sobel_x);
-        edge::applyFilterGrid(blurred, sobel_y, edge::sobel_y, SOBEL_SIZE);
+        filter::applyFilterGrid(blurred, sobel_y, filter::sobel_y, SOBEL_SIZE);
         cv::imwrite(prefix + image_name + std::string("/sobel_y_blur.jpg"), sobel_y);
         sobel = sobel_x + sobel_y;
         cv::imwrite(prefix + image_name + std::string("/sobel_blur.jpg"), sobel);
