@@ -28,6 +28,19 @@ namespace pdi
         }
     }
 
+
+    void multiply(cv::Mat &src, cv::Mat &dst, cv::Mat &bin)
+    {
+        bin.copyTo(dst);
+        for (int i = 0; i < dst.rows; i++)
+        {
+            for (int j = 0; j < dst.cols; j++)
+            {
+                dst.at<uchar>(i, j) = (bin.at<uchar>(i, j) == 255)*src.at<uchar>(i, j);
+            }
+        }
+    }
+
     int changePixelGamma(uchar pixel, double gamma)
     {
         const double max_intensity = 255;
