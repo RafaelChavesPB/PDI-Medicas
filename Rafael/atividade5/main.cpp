@@ -3,35 +3,36 @@
 #include "main.h"
 #include "filters.h"
 #include "algorithms.h"
+#include "masks.h"
 
 std::string filename, image_name, prefix("../generated/");
 
-void routine(cv::Mat src, int mask_x[3][3], int mask_y[3][3], std::string maskname, std::string description)
-{
-    cv::Mat dst_x, dst_y, two_axis;
-    filter::applyFilterGrid(src, dst_x, mask_x);
-    cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string("_x.jpg"), dst_x);
+// void routine(cv::Mat src, int mask_x[3][3], int mask_y[3][3], std::string maskname, std::string description)
+// {
+//     cv::Mat dst_x, dst_y, two_axis;
+//     filter::applyFilterGrid(src, dst_x, mask_x);
+//     cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string("_x.jpg"), dst_x);
 
-    filter::applyFilterGrid(src, dst_y, mask_y);
-    cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string("_y.jpg"), dst_y);
+//     filter::applyFilterGrid(src, dst_y, mask_y);
+//     cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string("_y.jpg"), dst_y);
 
-    two_axis = dst_x + dst_y;
-    cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string(".jpg"), two_axis);
-    std::cout << description << " ... Done" << std::endl;
-}
+//     two_axis = dst_x + dst_y;
+//     cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string(".jpg"), two_axis);
+//     std::cout << description << " ... Done" << std::endl;
+// }
 
-void routine(cv::Mat src, int mask[3][3], std::string maskname, std::string description)
-{
-    cv::Mat dst;
-    filter::applyFilterGrid(src, dst, mask);
-    cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string(".jpg"), dst);
-    std::cout << description + " ... Done" << std::endl;
-}
+// void routine(cv::Mat src, int mask[3][3], std::string maskname, std::string description)
+// {
+//     cv::Mat dst;
+//     filter::applyFilterGrid(src, dst, mask);
+//     cv::imwrite(prefix + image_name + std::string("/") + maskname + std::string(".jpg"), dst);
+//     std::cout << description + " ... Done" << std::endl;
+// }
 
 int main(int argc, char **argv)
 {
-    int window_size = std::stoi(argv[argc-1]);
-    for (int i = 1; i < argc-1; i++)
+    int ds = std::stoi(argv[argc - 1]);
+    for (int i = 1; i < argc - 1; i++)
     {
         filename = std::string(argv[i]);
         std::cout << filename << std::endl;
@@ -40,9 +41,30 @@ int main(int argc, char **argv)
         system((std::string("mkdir ") + prefix + image_name).c_str());
 
         cv::Mat src = cv::imread(filename);
-        cv::Mat hsv;
+        cv::Mat hsv, hsv_initial, dst;
+        int centroids[ds] = {0}, buckets[ds] = {0};
         cv::cvtColor(src, hsv, cv::COLOR_BGR2HSV);
-        algo::kmeans(hsv, 3);
+        cv::imwrite(prefix + image_name + std::string("/hsv.jpg"), hsv);
+
+        hsv.copyTo(hsv_initial);
+
+        algo::kmeans(hsv, buckets, centroids, ds);
+        cv::imwrite(prefix + image_name + std::string("/hsv_modified.jpg"), hsv);
+        cv::cvtColor(hsv, dst, cv::COLOR_HSV2BGR);
+        cv::imwrite(prefix + image_name + std::string("/modified.jpg"), dst);
+
+        cv::Mat mask;
+        int prv = 0;
+        for(int i = 0; i < ds; i++){
+            mask = mask::color_mask(hsv, prv, buckets[i]);
+            cv::imwrite(prefix + image_name + std::string("/buckets") + std::to_string(buckets[i]) +  std::string(".jpg"), mask);
+            prv = buckets[i];
+        }
+
+        for(int i = 0; i < ds; i++){
+            mask = mask::color_mask(hsv, centroids[i], centroids[i]+1);
+            cv::imwrite(prefix + image_name + std::string("/centroids") + std::to_string(centroids[i]) +  std::string(".jpg"), mask);
+        }
 
         // // Original image
         // cv::Mat src = cv::imread(filename, cv::IMREAD_GRAYSCALE);
@@ -51,7 +73,7 @@ int main(int argc, char **argv)
 
         // // Blured Image
         // cv::Mat blurred;
-        // filter::applyBlurGrid(src, blurred, window_size);
+        // filter::applyBlurGrid(src, blurred, ds);
         // cv::imwrite(prefix + image_name + std::string("/blurred.jpg"), blurred);
         // std::cout << "Blurred ... Done" << std::endl;
 
