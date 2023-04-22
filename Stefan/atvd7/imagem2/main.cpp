@@ -5,24 +5,57 @@
 int di[8] = {0, 0, 1, -1, 1, 1, -1, -1};
 int dj[8] = {1, -1, 0, 0, 1, -1, -1, 1};
 
-void dfs(cv::Mat &a, std::vector<std::vector<bool>> &vis, int i, int j, int &points){
+void dfs1(cv::Mat &a, int i, int j){
     std::stack<std::pair<int, int>> s;
     s.push({i, j});
     while(!s.empty()){
         auto [row, col] = s.top();
         s.pop();
-        points++;
-        vis[row][col] = true;
-        a.at<uchar>(row, col) = 1;
-        for(int k = 0; k < 8; k++){
+        a.at<uchar>(row, col) = 0;
+        for(int k = 0; k < 4; k++){
             int nxi = di[k] + row;
             int nxj = dj[k] + col;
+            if(not (nxi >= 0 and nxi < a.rows and nxj >= 0 and nxj < a.cols)) continue;
             uchar point = a.at<uchar>(nxi, nxj);
-            if(point > 20 and !vis[nxi][nxj]) s.push({nxi, nxj});
+            if(point > 20) s.push({nxi, nxj});
         }
     }
 }
 
+void dfs2(cv::Mat &a, int i, int j, std::vector<std::vector<bool>> &vis){
+    std::stack<std::pair<int, int>> s;
+    s.push({i, j});
+    while(!s.empty()){
+        auto [row, col] = s.top();
+        s.pop();
+        vis[row][col] = true;
+        a.at<uchar>(row, col) = 128;
+        for(int k = 0; k < 8; k++){
+            int nxi = di[k] + row;
+            int nxj = dj[k] + col;
+            if(not (nxi >= 0 and nxi < a.rows and nxj >= 0 and nxj < a.cols)) continue;
+            uchar &point = a.at<uchar>(nxi, nxj);
+            if(point == 255) s.push({nxi, nxj});
+        }
+    }
+}
+
+void dfs3(cv::Mat &a, int i, int j){
+    std::stack<std::pair<int, int>> s;
+    s.push({i, j});
+    while(!s.empty()){
+        auto [row, col] = s.top();
+        s.pop();
+        a.at<uchar>(row, col) = 255;
+        for(int k = 0; k < 4; k++){
+            int nxi = di[k] + row;
+            int nxj = dj[k] + col;
+            if(not (nxi >= 0 and nxi < a.rows and nxj >= 0 and nxj < a.cols)) continue;
+            uchar &point = a.at<uchar>(nxi, nxj);
+            if(point < 20) s.push({nxi, nxj});
+        }
+    }
+}
 
 void multiply_color(cv::Mat &src, cv::Mat &dst, cv::Mat &bin){
     dst = src.clone();
@@ -38,20 +71,19 @@ void multiply_color(cv::Mat &src, cv::Mat &dst, cv::Mat &bin){
     }
 }
 
-void remove_white(cv::Mat &src, int white_thr, int black_thr){
-    for(int ty = 0; ty < src.rows; ty++){
-        for(int tx = 0; tx < src.rows; tx++){
-            if(src.at<uchar>(ty, tx) >= white_thr){
-                int k1 = ty;
-                while(src.at<uchar>(k1, tx) >= white_thr) k1++;
-                int k2 = ty;
-                while(src.at<uchar>(k2, tx) >= white_thr) k2--;
-                if(src.at<uchar>(k1, tx) < black_thr or src.at<uchar>(k2, tx) < black_thr)
-                    src.at<uchar>(ty, tx) = 0;
-            }
-        }
+void drawCircle(cv::Mat &src, std::vector<cv::Vec3f> &circles){
+    for( size_t idx = 0; idx < circles.size(); idx++)
+    {
+    cv::Vec3i c = circles[idx];
+    cv::Point center = cv::Point(c[0], c[1]);
+    // circle outline
+    int radius = c[2];
+    // cv::putText(src,std::to_string(idx + 1),center, cv::FONT_HERSHEY_PLAIN, 1 ,cv::Scalar(0), 1,cv::LINE_8);
+    cv::circle(src, center, radius, cv::Scalar(0), 2, cv::LINE_8);
     }
 }
+
+
 
 int main(int argc, char** argv){
     if(argc < 2){
@@ -66,7 +98,7 @@ int main(int argc, char** argv){
         std::string imgName = argv[i + 1];
         clearString(imgName);
         
-        printf("\nProcessing \"%s\" image...\n", imgName.c_str());
+        printf("\nStarted rocessing \"%s\" image...\n\n", imgName.c_str());
 
         // Creates folder
         std::string folderName = "Results-IMG[" + imgName + "]";
@@ -74,182 +106,158 @@ int main(int argc, char** argv){
 
         // Sets path variabel for future work
         std::string path = "";
-
+        
+        createFolder((folderName + "/default").c_str());
+        createFolder((folderName + "/first_part").c_str());
+        createFolder((folderName + "/second_part").c_str());
+        createFolder((folderName + "/final_part").c_str());
+        createFolder((folderName + "/final_part/all_color").c_str());
+        createFolder((folderName + "/second_part/first_kill").c_str());
+        createFolder((folderName + "/second_part/second_kill").c_str());
+        path = folderName + "/default/";
         /////////////////////////// Gray Images //////////////////////////////////
 
         // Gray Image
         cv::Mat imgGray = cv::imread(argv[i + 1], cv::IMREAD_GRAYSCALE);
-        cv::Mat gray_blurred;
-        cv::blur(imgGray, gray_blurred, cv::Size(5,5));
 
         // Escrevendo as imagens
-        path = folderName + "/";
         cv::imwrite(path + "original.png", image);
-        cv::imwrite(path + "original_grayscale.png", imgGray);
-        cv::imwrite(path + "grayscale_blurred.png", gray_blurred);
-
-        createFolder((folderName + (std::string)"/1-Pre-processamento").c_str());
-        path = folderName + "/1-Pre-processamento/";
-        int num = 0; // counts number of image
-        // Sobel
-        cv::Mat sobel_x, sobel_y, sobel_xy;
-        cv::Mat sobel_x_kernel = (cv::Mat_<char>(3, 3) << -1, -2, -1, 0, 0, 0, 1, 2, 1);
-        cv::Mat sobel_y_kernel = (cv::Mat_<char>(3, 3) << -1, 0, 1, -2, 0, 2, -1, 0, 1);
-        cv::filter2D(imgGray, sobel_x, CV_16S, sobel_x_kernel);
-        cv::filter2D(imgGray, sobel_y, CV_16S, sobel_y_kernel);
-        cv::convertScaleAbs(sobel_x, sobel_x);
-        cv::convertScaleAbs(sobel_y, sobel_y);
-        cv::addWeighted(sobel_x, 0.5, sobel_y, 0.5, 0, sobel_xy);
-        cv::imwrite(path + std::to_string(++num) + "sobel.png", sobel_xy);
+        cv::imwrite(path + "grayscale.png", imgGray);
         
-        // Dilate Sobel
-        cv::Mat temp = sobel_xy.clone();
-        int op = 15, erode_time = 7, bin_time = 1;
-        for(int k = 0; k < op; k++){
-            if(k == erode_time){
-                cv::erode(temp, temp, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(5, 5)));
-                cv::imwrite(path + std::to_string(++num) + "eroded" + std::to_string(k + 1) + ".png", temp);
-            }else if(k == bin_time){
-                for(int y = 0; y < temp.rows; y++){
-                    for(int x = 0; x < temp.cols; x++){
-                        uchar &point = temp.at<uchar>(y, x);
-                        point = point < 20 ? 0 : 255;
-                    }
-                }
-                cv::imwrite(path + std::to_string(++num) + "dilated_bin" + std::to_string(k + 1) + ".png", temp);
-            }else{
-                cv::dilate(temp, temp, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(5, 5)));
-                cv::imwrite(path + std::to_string(++num) + "dilated" + std::to_string(k + 1) + ".png", temp);
+        int num = 0;
+        /////////////////////////////////////////// PARTE 1 ///////////////////////////////////////////////////////////
+        std::cerr << "\nFirst part...\n";
+    
+        path = folderName + "/first_part/";
+        
+        std::vector<cv::Vec3f> circles;
+        cv::Mat parte1 = imgGray.clone();
+        cv::HoughCircles(parte1, circles, cv::HOUGH_GRADIENT, 1,
+                    imgGray.rows/64,  // change this value to detect circles with different distances to each other
+                    100, 40, 25, 45 // change the last two parameters
+        );
+        std::cerr << "Found " << circles.size() << " circles\n";
+        drawCircle(parte1, circles);
+        cv::imwrite(path + std::to_string(++num) + "circle_drawn.png", parte1);
+        dfs1(parte1, 0, 0);
+        cv::imwrite(path + std::to_string(++num) + "after_dfs.png", parte1);
+
+        for(int r = 0; r < parte1.rows; r++){
+            for(int c = 0; c < parte1.cols; c++){
+                uchar &point = parte1.at<uchar>(r, c);
+                if(point not_eq 0) point = 255;
             }
         }
+        cv::imwrite(path + std::to_string(++num) + "bin_components.png", parte1);
 
-        ///////////////////////////////////////////////////
-        
-        createFolder((folderName + (std::string)"/2-Maybe").c_str());
-        path = folderName + "/2-Maybe/";
+        std::cerr << "First part done\n";
+        /////////////////////////////////////////// PARTE 2 ///////////////////////////////////////////////////////////
+        std::cerr << "\nSecond part...\n";
 
-        cv::Mat maybe = temp & imgGray;
-        cv::imwrite(path + std::to_string(++num) + "bitwise_with_gray.png", maybe);
-        
-        // Remove White color
-        for(int l = 0; l < maybe.rows; l++){
-            for(int c = 0; c < maybe.cols; c++){
-                uchar &point = maybe.at<uchar>(l, c);
-                if(point >= 250) point = 0;
-            }
+        path = folderName + "/second_part/";
+
+        circles.clear();
+        cv::Mat parte2 = imgGray.clone();
+        cv::HoughCircles(parte2, circles, cv::HOUGH_GRADIENT, 1,
+                    imgGray.rows/64,  // change this value to detect circles with different distances to each other
+                    100, 40, 25, 45 // change the last two parameters
+        );
+        std::cerr << "Found " << circles.size() << " circles\n";
+
+        drawCircle(parte2, circles);
+        cv::imwrite(path + std::to_string(++num) + "circle_drawn.png", parte2);
+
+        path = folderName + "/second_part/first_kill/";
+        for(int idx = 0; idx < circles.size(); idx++){
+            cv::Vec3i c = circles[idx];
+            dfs1(parte2, c[1], c[0]);
+            cv::imwrite(path + std::to_string(++num) + "dfs" + std::to_string(idx + 1) + ".png", parte2);
         }
-        cv::imwrite(path + std::to_string(++num) + "removed_white.png", maybe);
+        cv::imwrite(path + std::to_string(++num) + "after_all_first_dfs.png", parte2);
 
-        // Blur
-        for(int k = 0; k < 2; k++) blur(maybe, maybe, cv::Size(5, 5));
-        cv::imwrite(path + std::to_string(++num) + "blurred.png", maybe);
+        path = folderName + "/second_part/second_kill/";
+        for(int idx = 0; idx < circles.size(); idx++){
+            cv::Vec3i c = circles[idx];
+            dfs3(parte2, c[1], c[0]);
+            cv::imwrite(path + std::to_string(++num) + "dfs" + std::to_string(idx + 1) + ".png", parte2);
+        }
+        cv::imwrite(path + std::to_string(++num) + "after_all_second_dfs.png", parte2);
+
+        path = folderName + "/second_part/";
+        cv::threshold(parte2, parte2, 130, 255, cv::THRESH_BINARY_INV);
+        cv::imwrite(path + std::to_string(++num) + "binarized.png", parte2);
+
+        for(int k = 0; k < 4; k++)
+            cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
+        for(int k = 0; k < 6; k++)
+            cv::erode(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
+        for(int k = 0; k < 3; k++)
+            cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
+        cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 3)));
+        cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 5)));
         
-        for(int l = 0; l < maybe.rows; l++){
-            for(int c = 0; c < maybe.cols; c++){
-                uchar &point = maybe.at<uchar>(l, c);
-                if(point > 20) point = 255;
-                else point = 0;
-            }
-        }
-        cv::imwrite(path + std::to_string(++num) + "binarized.png", maybe);
+        cv::imwrite(path + std::to_string(++num) + "dilate_erode_process.png", parte2);
 
-        op = 4;
-        for(int k = 0; k < op; k++){
-            if(k >= 2){
-                cv::erode(maybe, maybe, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(5, 5)));
-                cv::imwrite(path + std::to_string(++num) + "eroded_bin" + std::to_string(k + 1) + ".png", maybe);
-            }else{
-                cv::dilate(maybe, maybe, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(5, 5)));
-                cv::imwrite(path + std::to_string(++num) + "dilated_bin" + std::to_string(k + 1) + ".png", maybe);
-            }
-        }
+        std::cerr << "Second part done.\n";
+////////////////////////////////////////////////// PROCESSANDO COMPONENTES ////////////////////
+        std::cerr << "\nLooking for components...\n";
 
-        // Visited vector for dfs
-        std::vector<std::vector<bool>> visited(maybe.rows, std::vector<bool>(maybe.cols, 0));
+        std::vector<cv::Mat> ans;
+        cv::Mat component;
+        std::vector<std::vector<bool>> vis1(parte1.rows, std::vector<bool>(parte1.cols, 0));
+        std::vector<std::vector<bool>> vis2(parte2.rows, std::vector<bool>(parte2.cols, 0));
 
-        createFolder((folderName + (std::string)"/3-Find").c_str());
-        createFolder((folderName + (std::string)"/4-Gray").c_str());
-        createFolder((folderName + (std::string)"/5-Color").c_str());
-        path = folderName + "/3-Find/";
-
-        int cont = 0, b = 0;
-        for(int y = 0; y < maybe.rows; y++){
-            for(int x = 0; x < maybe.cols; x++){
-                uchar point = maybe.at<uchar>(y, x);
-                if(point < 20 or visited[y][x]){
-                    continue;
-                }
-                cont++;
-                cv::Mat ball = maybe.clone();
-                int points = 0;
-                dfs(ball, visited, y, x, points);
-                if(points < 1000) continue;
-                b++;
-                std::cerr << b << ". dfs called from " << y << ' ' << x << " was successfull" << '\n';
-
-                for(int row = 0; row < ball.rows; row++){
-                    for(int col = 0; col < ball.cols; col++){
-                        auto &p = ball.at<uchar>(row, col);
-                        p = p == 1? 255 : 0;
-                    }
-                }
-                path = folderName + "/3-Find/";
-
-                cv::imwrite(path + std::to_string(++num) + "after_dfs" + std::to_string(b) + ".png", ball);
-
-                for(int k = 0; k < 3; k++){
-                    cv::erode(ball, ball, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-                }
-                cv::imwrite(path + std::to_string(++num) + "erode_after_dfs" + std::to_string(b) + ".png", ball);
-
-                // Do detailed processing for images 7 and 9
-                switch(b){
-                    case 7:
-                        for(int k = 0; k < 4; k++){
-                            cv::dilate(ball, ball, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5)));
-                            cv::dilate(ball, ball, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(5, 5)));
+        for(int r = 0; r < parte1.rows; r++){
+            for(int c = 0; c < parte1.cols; c++){
+                uchar &point = parte1.at<uchar>(r, c);
+                if(not vis1[r][c] and point == 255){
+                    std::cerr << "Component starting in " << r << ' ' << c << " from part 1";
+                    component = parte1.clone();
+                    dfs2(component, r, c, vis1);
+                    std::cerr << " -> dfs done" << '\n';
+                    for(int i = 0; i < component.rows; i++){
+                        for(int j = 0; j < component.cols; j++){
+                            uchar &p = component.at<uchar>(i, j);
+                            p = p == 128? 255 : 0;
                         }
-                        for(int k = 0; k < 10; k++)
-                            cv::erode(ball, ball, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-                        break;
-                    
-                    case 9:
-                        for(int k = 0; k < 7; k++)
-                            cv::dilate(ball, ball, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)));
-                        
-                        for(int k = 0; k < 2; k++)
-                            blur(ball, ball, cv::Size(3, 3));
-                        
-                        for(int k = 0; k < 7; k++)
-                            cv::erode(ball, ball, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-                        break;
-
-                    default:
-                        break;
-                }
-
-                // Create Mask
-                for(int row = 0; row < ball.rows; row++){
-                    for(int col = 0; col < ball.cols; col++){
-                        auto &p = ball.at<uchar>(row, col);
-                        p = p not_eq 0? 255 : 0;
                     }
+                    ans.push_back(component);
                 }
-
-                cv::imwrite(path + std::to_string(++num) + "mask_ball" + std::to_string(b) + ".png", ball);
-
-                cv::Mat final_result;
-                multiply_color(image, final_result, ball);
-                cv::Mat gray_result = ball & imgGray;
-
-                path = folderName + "/4-Gray/";
-                cv::imwrite(path + std::to_string(++num) + "ball" + std::to_string(b) + ".png", gray_result);
-                path = folderName + "/5-Color/";
-                cv::imwrite(path + std::to_string(++num) + "color_ball" + std::to_string(b) + ".png", final_result);
-
+                uchar &p2 = parte2.at<uchar>(r, c);
+                if(not vis2[r][c] and p2 == 255){
+                    std::cerr << "Component starting in " << r << ' ' << c << " from part 2";
+                    component = parte2.clone();
+                    dfs2(component, r, c, vis2);
+                    std::cerr << " -> dfs done" << '\n';
+                    for(int i = 0; i < component.rows; i++){
+                        for(int j = 0; j < component.cols; j++){
+                            uchar &p = component.at<uchar>(i, j);
+                            p = p == 128? 255 : 0;
+                        }
+                    }
+                    ans.push_back(component);
+                }
             }
         }
-        std::cerr << "Code called dfs " << cont << " times but only " << b << " were successfull" << '\n';
+
+        /////////////////////////////////////////// Final Result //////////////////////////////////////////////////
+        std::cerr << "\nFound " << ans.size() << " components\n";
+        int x = 1;
+
+        cv::Mat temp;
+        for(auto &item : ans){
+            createFolder((folderName + "/final_part/Ball" + std::to_string(x++)).c_str());
+            path = folderName + "/final_part/Ball" + std::to_string(x - 1) + "/";
+            cv::imwrite(path + std::to_string(++num) + "mask.png", item);
+            temp = item & imgGray;
+            cv::imwrite(path + std::to_string(++num) + "gray.png", temp);
+            multiply_color(image, temp, item);
+            cv::imwrite(path + std::to_string(++num) + "color.png", temp);
+            path = folderName + "/final_part/all_color/";
+            cv::imwrite(path + std::to_string(++num) + "ball" + std::to_string(x - 1) + ".png", temp);
+        }
+
+        printf("\nProcessing for \"%s\" has ended.\n", imgName.c_str());
 
     }
     return 0;
