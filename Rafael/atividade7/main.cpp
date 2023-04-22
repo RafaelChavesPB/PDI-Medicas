@@ -157,30 +157,30 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         // GET FOOTBALL BALL
-        getMaskFromHue(hsv, mask, 28, 40);
+        getMaskFromHue(hsv, mask, 28, 40, 128, 256);
         imwrite("../images/ball4/mask.jpg", mask);
-        // F_ERODE = 2, F_DILATE = 15, S_ERODE = 13;
+        F_ERODE = 2, F_DILATE = 15, S_ERODE = 12;
         // for (int i = 0; i < F_ERODE; i++)
         // {
         //     erode(mask, mask, ellipse);
         //     sprintf(filename, "../images/ball4/first-erode%d.jpg", i);
         //     imwrite(filename, mask);
         // }
-        // for (int i = 0; i < F_DILATE; i++)
-        // {
-        //     dilate(mask, mask, rec);
-        //     sprintf(filename, "../images/ball4/first-dilate%d.jpg", i);
-        //     imwrite(filename, mask);
-        // }
-        // for (int i = 0; i < S_ERODE; i++)
-        // {
-        //     erode(mask, mask, cross);
-        //     sprintf(filename, "../images/ball4/second-erode%d.jpg", i);
-        //     imwrite(filename, mask);
-        // }
-        // applyMaskBGR(bgr, ball, mask, false, true);
-        // imwrite("../images/ball4/ball.jpg", ball);
-        // applyMaskBGR(bgr, bgr, mask, true, true);
+        for (int i = 0; i < F_DILATE; i++)
+        {
+            dilate(mask, mask, cross);
+            sprintf(filename, "../images/ball4/first-dilate%d.jpg", i);
+            imwrite(filename, mask);
+        }
+        for (int i = 0; i < S_ERODE; i++)
+        {
+            erode(mask, mask, ellipse);
+            sprintf(filename, "../images/ball4/second-erode%d.jpg", i);
+            imwrite(filename, mask);
+        }
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball4/ball.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
     }
 
     return 0;
