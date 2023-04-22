@@ -56,7 +56,8 @@ int main()
     char filename[100];
     std::string labels;
     Mat layers[8], channels[3];
-    Mat gray, bgr, hsv, mask;
+    Mat gray, bgr, hsv, mask, ball;
+    int F_ERODE, F_DILATE, S_ERODE;
 
     // RECEIVING IMAGE
     bgr = imread("../images/ball.jpg", IMREAD_COLOR);
@@ -74,17 +75,47 @@ int main()
     // GET BLUE BALL
     getMaskFromHue(hsv, mask, 100, 108);
     imwrite("../images/ball1/mask.jpg", mask);
-    int F_ERODE = 1, F_DILATE = 4, S_ERODE = 3;
+    F_ERODE = 1, F_DILATE = 4, S_ERODE = 3;
     for (int i = 0; i < F_ERODE; i++)
         erode(mask, mask, rec);
     for (int i = 0; i < F_DILATE; i++)
         dilate(mask, mask, rec);
     for (int i = 0; i < S_ERODE; i++)
         erode(mask, mask, rec);
-    applyMaskBGR(bgr, bgr, mask, false, true);
-    imwrite("../images/ball1/ball.jpg", bgr);
+    applyMaskBGR(bgr, ball, mask, false, true);
+    imwrite("../images/ball1/ball.jpg", ball);
     applyMaskBGR(bgr, bgr, mask, true, true);
-    imwrite("../images/ball2/ball2.jpg", bgr);
+
+    // SET GRAY AND HSV AGAIN
+    cvtColor(bgr, gray, COLOR_BGR2GRAY);
+    cvtColor(bgr, hsv, COLOR_BGR2HSV);
+
+    // GET BASKET BALL
+    getMaskFromHue(hsv, mask, 10, 15);
+    F_ERODE = 2, F_DILATE = 13, S_ERODE = 5;
+    for (int i = 0; i < F_ERODE; i++)
+    {
+        erode(mask, mask, rec);
+        sprintf(filename, "../images/ball2/first-erode%d.jpg", i);
+        imwrite(filename, mask);
+    }
+    erode(mask, mask, rec);
+    for (int i = 0; i < F_DILATE; i++)
+    {
+        dilate(mask, mask, ellipse);
+        sprintf(filename, "../images/ball2/first-dilate%d.jpg", i);
+        imwrite(filename, mask);
+    }
+    for (int i = 0; i < S_ERODE; i++)
+    {
+        erode(mask, mask, cross);
+        sprintf(filename, "../images/ball2/second-erode%d.jpg", i);
+        imwrite(filename, mask);
+    }
+    // imwrite("../images/ball2/mask.jpg", mask);
+    applyMaskBGR(bgr, ball, mask, false, true);
+    imwrite("../images/ball2/ball.jpg", ball);
+    applyMaskBGR(bgr, bgr, mask, true, true);
     return 0;
 }
 
