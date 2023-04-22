@@ -24,20 +24,19 @@ int main()
     char filename[100];
 
     Mat gray, bgr, hsv;
-    gray = imread("../resources/ball.jpg", IMREAD_GRAYSCALE);
-    bgr = imread("../resources/ball.jpg", IMREAD_COLOR);
+    gray = imread("../images/ball.jpg", IMREAD_GRAYSCALE);
+    bgr = imread("../images/ball.jpg", IMREAD_COLOR);
     cvtColor(bgr, hsv, COLOR_BGR2HSV);
-
+    imwrite("../images/gray.jpg", gray);
+    imwrite("../images/hsv.jpg", hsv);
     return 0;
 }
-
-
 
 // // GET BIT LAYERS:
 // Mat layers[8];
 // getImageLayers(gray, layers);
 // for(int i = 0; i < 8; i++){
-//     sprintf(filename, "../generated/layers/%d.jpg",i);
+//     sprintf(filename, "../images/layers/%d.jpg",i);
 //     imwrite(filename, layers[i]);
 // }
 
@@ -46,7 +45,7 @@ int main()
 // char labels[] = "BGR";
 // split(bgr, channels);
 // for(int i = 0; i < 3; i++){
-//     sprintf(filename, "../generated/channels/bgr/%c.jpg",labels[i]);
+//     sprintf(filename, "../images/channels/bgr/%c.jpg",labels[i]);
 //     imwrite(filename, channels[i]);
 // }
 
@@ -55,7 +54,7 @@ int main()
 // char labels[] = "HSV";
 // split(hsv, channels);
 // for(int i = 0; i < 3; i++){
-//     sprintf(filename, "../generated/channels/hsv/%c.jpg",labels[i]);
+//     sprintf(filename, "../images/channels/hsv/%c.jpg",labels[i]);
 //     imwrite(filename, channels[i]);
 // }
 
@@ -68,7 +67,7 @@ int main()
 //     getImageLayers(channels[i], layers);
 //     for (int j = 0; j < 8; j++)
 //     {
-//         sprintf(filename, "../generated/channels/bgr/%c/%d.jpg",labels[i],j);
+//         sprintf(filename, "../images/channels/bgr/%c/%d.jpg",labels[i],j);
 //         imwrite(filename, layers[j]);
 //     }
 // }
@@ -82,7 +81,7 @@ int main()
 //     getImageLayers(channels[i], layers);
 //     for (int j = 0; j < 8; j++)
 //     {
-//         sprintf(filename, "../generated/channels/hsv/%c/%d.jpg",labels[i],j);
+//         sprintf(filename, "../images/channels/hsv/%c/%d.jpg",labels[i],j);
 //         imwrite(filename, layers[j]);
 //     }
 // }
