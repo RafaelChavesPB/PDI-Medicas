@@ -19,7 +19,7 @@ void getImageLayers(Mat &src, Mat *dst)
     }
 }
 
-void getMaskFromHue(Mat &src, Mat &mask, int begin, int end, int begin_sat = 0, int end_sat = 255, int begin_val = 0, int end_val = 255)
+void getMaskFromHSV(Mat &src, Mat &mask, int begin, int end = 180, int begin_sat = 0, int end_sat = 255, int begin_val = 0, int end_val = 255)
 {
 
     mask = Mat::zeros(src.size(), CV_8UC1);
@@ -60,7 +60,7 @@ int main()
     char filename[100];
     std::string labels;
     Mat layers[8], channels[3];
-    Mat gray, bgr, hsv, mask, ball;
+    Mat gray, bgr, hsv, mask, aux, ball;
     int F_ERODE, F_DILATE, S_ERODE;
 
     // RECEIVING IMAGE
@@ -78,7 +78,7 @@ int main()
 
     {
         // GET BLUE BALL
-        getMaskFromHue(hsv, mask, 100, 108);
+        getMaskFromHSV(hsv, mask, 100, 108);
         imwrite("../images/ball1/initial_mask.jpg", mask);
         F_ERODE = 1, F_DILATE = 4, S_ERODE = 3;
         for (int i = 0; i < F_ERODE; i++)
@@ -97,7 +97,7 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         // GET BASKETBALL BALL
-        getMaskFromHue(hsv, mask, 10, 15);
+        getMaskFromHSV(hsv, mask, 10, 15);
         imwrite("../images/ball2/initial_mask.jpg", mask);
         F_ERODE = 2, F_DILATE = 13, S_ERODE = 7;
         for (int i = 0; i < F_ERODE; i++)
@@ -128,7 +128,7 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         // GET FOOTBALL BALL
-        getMaskFromHue(hsv, mask, 6, 9);
+        getMaskFromHSV(hsv, mask, 6, 9);
         imwrite("../images/ball3/initial_mask.jpg", mask);
         F_ERODE = 2, F_DILATE = 15, S_ERODE = 13;
         for (int i = 0; i < F_ERODE; i++)
@@ -159,7 +159,7 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         // GET FOOTBALL BALL
-        getMaskFromHue(hsv, mask, 28, 40, 128, 256);
+        getMaskFromHSV(hsv, mask, 28, 40, 128, 256);
         imwrite("../images/ball4/initial_mask.jpg", mask);
         F_ERODE = 2, F_DILATE = 15, S_ERODE = 12;
         for (int i = 0; i < F_DILATE; i++)
@@ -184,7 +184,7 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         // GET FOOTBALL BALL
-        getMaskFromHue(hsv, mask, 20, 25, 180);
+        getMaskFromHSV(hsv, mask, 20, 25, 180);
         imwrite("../images/ball5/initial_mask.jpg", mask);
         F_DILATE = 25, S_ERODE = 22;
         for (int i = 0; i < F_DILATE; i++)
@@ -202,7 +202,7 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         // GET FOOTBALL BALL
-        getMaskFromHue(hsv, mask, 15, 40, 10, 80);
+        getMaskFromHSV(hsv, mask, 15, 40, 10, 80);
         imwrite("../images/ball6/initial_mask.jpg", mask);
         F_ERODE = 3, F_DILATE = 8, S_ERODE = 0;
         for (int i = 0; i < F_ERODE; i++)
@@ -218,7 +218,71 @@ int main()
         imwrite("../images/ball6/ball.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
     }
-
+    {
+        // SET GRAY AND HSV AGAIN
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        // GET FOOTBALL BALL
+        getMaskFromHSV(hsv, mask, 15, 40, 10, 80);
+        imwrite("../images/ball6/initial_mask.jpg", mask);
+        F_ERODE = 3, F_DILATE = 8, S_ERODE = 0;
+        for (int i = 0; i < F_ERODE; i++)
+            erode(mask, mask, rec);
+        imwrite("../images/ball6/first-erode.jpg", mask);
+        for (int i = 0; i < F_DILATE; i++)
+            dilate(mask, mask, ellipse);
+        imwrite("../images/ball6/first-dilate.jpg", mask);
+        for (int i = 0; i < S_ERODE; i++)
+            erode(mask, mask, ellipse);
+        imwrite("../images/ball6/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball6/ball.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+    }
+    {
+        // SET GRAY AND HSV AGAIN
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        // GET FOOTBALL BALL
+        getMaskFromHSV(hsv, mask, 0, 50);
+        imwrite("../images/ball7/initial_mask.jpg", mask);
+        F_ERODE = 9, F_DILATE = 20, S_ERODE = 8;
+        for (int i = 0; i < F_ERODE; i++)
+            erode(mask, mask, cross);
+        imwrite("../images/ball7/first-erode.jpg", mask);
+        for (int i = 0; i < F_DILATE; i++)
+            dilate(mask, mask, rec);
+        imwrite("../images/ball7/first-dilate.jpg", mask);
+        for (int i = 0; i < S_ERODE; i++)
+            erode(mask, mask, cross);
+        imwrite("../images/ball7/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball7/ball.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+    }
+    {
+        // SET GRAY AND HSV AGAIN
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        // GET FOOTBALL BALL
+        getMaskFromHSV(hsv, aux, 20, 50, 15);
+        getMaskFromHSV(hsv, mask, 175, 180, 15);
+        mask |= aux;
+        imwrite("../images/ball8/initial_mask.jpg", mask);
+        F_ERODE = 1, F_DILATE = 10, S_ERODE = 9;
+        for (int i = 0; i < F_ERODE; i++)
+            erode(mask, mask, cross);
+        imwrite("../images/ball8/first-erode.jpg", mask);
+        for (int i = 0; i < F_DILATE; i++)
+            dilate(mask, mask, rec);
+        imwrite("../images/ball8/first-dilate.jpg", mask);
+        for (int i = 0; i < S_ERODE; i++)
+            erode(mask, mask, ellipse);
+        imwrite("../images/ball8/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball8/ball.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+    }
     return 0;
 }
 
