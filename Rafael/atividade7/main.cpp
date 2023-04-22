@@ -72,7 +72,7 @@ int main()
     Mat cross = getStructuringElement(1, Size(3, 3));
     Mat ellipse = getStructuringElement(1, Size(3, 3));
 
-    // GET BLUE BALL
+// GET BLUE BALL
     getMaskFromHue(hsv, mask, 100, 108);
     imwrite("../images/ball1/mask.jpg", mask);
     F_ERODE = 1, F_DILATE = 4, S_ERODE = 3;
@@ -90,16 +90,15 @@ int main()
     cvtColor(bgr, gray, COLOR_BGR2GRAY);
     cvtColor(bgr, hsv, COLOR_BGR2HSV);
 
-    // GET BASKET BALL
+// GET BASKETBALL BALL
     getMaskFromHue(hsv, mask, 10, 15);
-    F_ERODE = 2, F_DILATE = 13, S_ERODE = 5;
+    F_ERODE = 2, F_DILATE = 13, S_ERODE = 7;
     for (int i = 0; i < F_ERODE; i++)
     {
         erode(mask, mask, rec);
         sprintf(filename, "../images/ball2/first-erode%d.jpg", i);
         imwrite(filename, mask);
     }
-    erode(mask, mask, rec);
     for (int i = 0; i < F_DILATE; i++)
     {
         dilate(mask, mask, ellipse);
@@ -116,6 +115,33 @@ int main()
     applyMaskBGR(bgr, ball, mask, false, true);
     imwrite("../images/ball2/ball.jpg", ball);
     applyMaskBGR(bgr, bgr, mask, true, true);
+
+// GET FOOTBALL BALL
+    getMaskFromHue(hsv, mask, 6, 9);
+    // imwrite("../images/ball3/mask.jpg", mask);
+    F_ERODE = 2, F_DILATE = 8, S_ERODE = 5;
+    for (int i = 0; i < F_ERODE; i++)
+    {
+        erode(mask, mask, rec);
+        sprintf(filename, "../images/ball3/first-erode%d.jpg", i);
+        imwrite(filename, mask);
+    }
+    for (int i = 0; i < F_DILATE; i++)
+    {
+        dilate(mask, mask, rec);
+        sprintf(filename, "../images/ball3/first-dilate%d.jpg", i);
+        imwrite(filename, mask);
+    }
+    for (int i = 0; i < S_ERODE; i++)
+    {
+        erode(mask, mask, rec);
+        sprintf(filename, "../images/ball3/second-erode%d.jpg", i);
+        imwrite(filename, mask);
+    }
+    applyMaskBGR(bgr, ball, mask, false, true);
+    imwrite("../images/ball3/ball.jpg", ball);
+    applyMaskBGR(bgr, bgr, mask, true, true);
+
     return 0;
 }
 
