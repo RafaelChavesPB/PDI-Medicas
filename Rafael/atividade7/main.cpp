@@ -3,7 +3,30 @@
 
 using namespace cv;
 
-void getImageLayers(cv::Mat &src, cv::Mat *dst)
+void getImageLayers(Mat &src, Mat *dst);
+void getMaskFromHue(Mat &src, Mat &dst, int begin, int end);
+
+int main()
+{
+    char filename[100];
+
+    Mat gray, bgr, hsv;
+    bgr = imread("../images/ball.jpg", IMREAD_COLOR);
+    GaussianBlur(bgr, bgr, Size(3, 3), 0, 0, BORDER_DEFAULT);
+    cvtColor(bgr, gray, COLOR_BGR2GRAY);
+    cvtColor(bgr, hsv, COLOR_BGR2HSV);
+    imwrite("../images/gray.jpg", gray);
+    imwrite("../images/hsv.jpg", hsv);
+
+
+    // GET BLUE BALL
+    Mat mask;
+    getMaskFromHue(hsv, mask, 100, 110);
+    imwrite("../images/mask.jpg", mask);
+    return 0;
+}
+
+void getImageLayers(Mat &src, Mat *dst)
 {
     for (int bit = 0; bit < 8; bit++)
     {
@@ -19,17 +42,18 @@ void getImageLayers(cv::Mat &src, cv::Mat *dst)
     }
 }
 
-int main()
+void getMaskFromHue(Mat &src, Mat &mask, int begin, int end)
 {
-    char filename[100];
 
-    Mat gray, bgr, hsv;
-    gray = imread("../images/ball.jpg", IMREAD_GRAYSCALE);
-    bgr = imread("../images/ball.jpg", IMREAD_COLOR);
-    cvtColor(bgr, hsv, COLOR_BGR2HSV);
-    imwrite("../images/gray.jpg", gray);
-    imwrite("../images/hsv.jpg", hsv);
-    return 0;
+    mask = Mat::zeros(src.size(), CV_8UC1);
+    for (int i = 0; i < src.rows; i++)
+    {
+        for (int j = 0; j < src.cols; j++)
+        {
+            uchar hue = src.at<Vec3b>(i, j)[0];
+            mask.at<uchar>(i, j) = begin < hue and hue <= end ? 255 : 0;
+        }
+    }
 }
 
 // // GET BIT LAYERS:
