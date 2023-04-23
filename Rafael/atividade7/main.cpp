@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
+#include <vector>
 
 using namespace cv;
 
@@ -53,6 +54,7 @@ void applyMaskBGR(Mat &src, Mat &dst, Mat &mask, bool remove = false, bool light
         }
     }
 }
+
 int main()
 {
 
@@ -60,7 +62,7 @@ int main()
     char filename[100];
     std::string labels;
     Mat layers[8], channels[3];
-    Mat gray, bgr, hsv, mask, aux, ball;
+    Mat gray, bgr, hsv, mask, aux, ball, circleImg;
     int F_ERODE, F_DILATE, S_ERODE;
 
     // RECEIVING IMAGE
@@ -69,7 +71,9 @@ int main()
 
     // GET GRAY AND HSV
     cvtColor(bgr, gray, COLOR_BGR2GRAY);
+    imwrite("../images/gray.jpg", gray);
     cvtColor(bgr, hsv, COLOR_BGR2HSV);
+    imwrite("../images/hsv.jpg", hsv);
 
     // CREATE ERODE AND DILATE ELEMENTS
     Mat rec = getStructuringElement(0, Size(3, 3));
@@ -83,13 +87,15 @@ int main()
         F_ERODE = 1, F_DILATE = 4, S_ERODE = 3;
         for (int i = 0; i < F_ERODE; i++)
             erode(mask, mask, rec);
+        imwrite("../images/ball1/first-erode.jpg", mask);
         for (int i = 0; i < F_DILATE; i++)
             dilate(mask, mask, rec);
+        imwrite("../images/ball1/first-dilate.jpg", mask);
         for (int i = 0; i < S_ERODE; i++)
             erode(mask, mask, rec);
         imwrite("../images/ball1/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball1/ball.jpg", ball);
+        imwrite("../images/ball1/ball1.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball1/balls.jpg", bgr);
     }
@@ -101,26 +107,16 @@ int main()
         imwrite("../images/ball2/initial_mask.jpg", mask);
         F_ERODE = 2, F_DILATE = 13, S_ERODE = 7;
         for (int i = 0; i < F_ERODE; i++)
-        {
             erode(mask, mask, rec);
-            // sprintf(filename, "../images/ball2/first-erode%d.jpg", i);
-            // imwrite(filename, mask);
-        }
+        imwrite("../images/ball2/first-erode.jpg", mask);
         for (int i = 0; i < F_DILATE; i++)
-        {
             dilate(mask, mask, ellipse);
-            // sprintf(filename, "../images/ball2/first-dilate%d.jpg", i);
-            // imwrite(filename, mask);
-        }
+        imwrite("../images/ball2/first-dilate.jpg", mask);
         for (int i = 0; i < S_ERODE; i++)
-        {
             erode(mask, mask, cross);
-            // sprintf(filename, "../images/ball2/second-erode%d.jpg", i);
-            // imwrite(filename, mask);
-        }
         imwrite("../images/ball2/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball2/ball.jpg", ball);
+        imwrite("../images/ball2/ball2.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball2/balls.jpg", bgr);
     }
@@ -133,26 +129,16 @@ int main()
         imwrite("../images/ball3/initial_mask.jpg", mask);
         F_ERODE = 2, F_DILATE = 15, S_ERODE = 13;
         for (int i = 0; i < F_ERODE; i++)
-        {
             erode(mask, mask, ellipse);
-            // sprintf(filename, "../images/ball3/first-erode%d.jpg", i);
-            // imwrite(filename, mask);
-        }
+        imwrite("../images/ball3/first-erode.jpg", mask);
         for (int i = 0; i < F_DILATE; i++)
-        {
             dilate(mask, mask, rec);
-            // sprintf(filename, "../images/ball3/first-dilate%d.jpg", i);
-            // imwrite(filename, mask);
-        }
+        imwrite("../images/ball3/first-dilate.jpg", mask);
         for (int i = 0; i < S_ERODE; i++)
-        {
             erode(mask, mask, cross);
-            // sprintf(filename, "../images/ball3/second-erode%d.jpg", i);
-            // imwrite(filename, mask);
-        }
         imwrite("../images/ball3/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball3/ball.jpg", ball);
+        imwrite("../images/ball3/ball3.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball3/balls.jpg", bgr);
     }
@@ -163,22 +149,15 @@ int main()
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         getMaskFromHSV(hsv, mask, 28, 40, 128, 256);
         imwrite("../images/ball4/initial_mask.jpg", mask);
-        F_ERODE = 2, F_DILATE = 15, S_ERODE = 12;
+        F_DILATE = 15, S_ERODE = 12;
         for (int i = 0; i < F_DILATE; i++)
-        {
             dilate(mask, mask, cross);
-            // sprintf(filename, "../images/ball4/first-dilate%d.jpg", i);
-            // imwrite(filename, mask);
-        }
+        imwrite("../images/ball4/first-dilate.jpg", mask);
         for (int i = 0; i < S_ERODE; i++)
-        {
             erode(mask, mask, ellipse);
-            // sprintf(filename, "../images/ball4/second-erode%d.jpg", i);
-            // imwrite(filename, mask);
-        }
         imwrite("../images/ball4/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball4/ball.jpg", ball);
+        imwrite("../images/ball4/ball4.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball4/balls.jpg", bgr);
     }
@@ -197,7 +176,7 @@ int main()
             erode(mask, mask, ellipse);
         imwrite("../images/ball5/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball5/ball.jpg", ball);
+        imwrite("../images/ball5/ball5.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball5/balls.jpg", bgr);
     }
@@ -219,7 +198,7 @@ int main()
             erode(mask, mask, ellipse);
         imwrite("../images/ball6/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball6/ball.jpg", ball);
+        imwrite("../images/ball6/ball6.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball6/balls.jpg", bgr);
     }
@@ -241,7 +220,7 @@ int main()
             erode(mask, mask, cross);
         imwrite("../images/ball7/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball7/ball.jpg", ball);
+        imwrite("../images/ball7/ball7.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball7/balls.jpg", bgr);
     }
@@ -265,20 +244,40 @@ int main()
             erode(mask, mask, ellipse);
         imwrite("../images/ball8/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball8/ball.jpg", ball);
+        imwrite("../images/ball8/ball8.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball8/balls.jpg", bgr);
     }
-    // GET FUTEBOL BALL
+    // GET CIRCLES
     {
-
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
-        getMaskFromHSV(hsv, mask, 0, 50);
+        circleImg = Mat::zeros(bgr.size(), CV_8UC3);
+        std::vector<Vec3f> circles;
+        Scalar colors[4] = {Scalar(0, 21, 255), Scalar(0, 170, 255), Scalar(255, 0, 0), Scalar(255, 0, 255)};
+        HoughCircles(gray, circles, HOUGH_GRADIENT, 1, gray.rows / 16, 100, 30, 30, 100);
+        for (size_t i = 0; i < 4; i++)
+        {
+            Vec3i c = circles[i];
+            Point center = Point(c[0], c[1]);
+            circle(circleImg, center, 2, colors[i], 3);
+            int radius = c[2];
+            circle(circleImg, center, radius, colors[i], 3);
+        }
+        imwrite("../images/circles.jpg", circleImg);
+        cvtColor(circleImg, circleImg, COLOR_BGR2HSV);
+    }
+    // GET FUTEBOL BALL
+    {
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        getMaskFromHSV(hsv, mask, 115, 120, 5, 10);
+        getMaskFromHSV(circleImg, aux, 90, 120);
+        mask |= aux;
         imwrite("../images/ball9/initial_mask.jpg", mask);
-        F_ERODE = 1, F_DILATE = 10, S_ERODE = 9;
+        F_ERODE = 1, F_DILATE = 20, S_ERODE = 15;
         for (int i = 0; i < F_ERODE; i++)
-            erode(mask, mask, cross);
+            erode(mask, mask, rec);
         imwrite("../images/ball9/first-erode.jpg", mask);
         for (int i = 0; i < F_DILATE; i++)
             dilate(mask, mask, rec);
@@ -287,9 +286,55 @@ int main()
             erode(mask, mask, ellipse);
         imwrite("../images/ball9/mask.jpg", mask);
         applyMaskBGR(bgr, ball, mask, false, true);
-        imwrite("../images/ball9/ball.jpg", ball);
+        imwrite("../images/ball9/ball9.jpg", ball);
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball9/balls.jpg", bgr);
+    }
+    // GET BEISEBOL BALL
+    {
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        getMaskFromHSV(hsv, mask, 0, 15);
+        getMaskFromHSV(circleImg, aux, 120, 150);
+        mask |= aux;
+        imwrite("../images/ball10/initial_mask.jpg", mask);
+        F_ERODE = 1, F_DILATE = 20, S_ERODE = 15;
+        for (int i = 0; i < F_ERODE; i++)
+            erode(mask, mask, rec);
+        imwrite("../images/ball10/first-erode.jpg", mask);
+        for (int i = 0; i < F_DILATE; i++)
+            dilate(mask, mask, rec);
+        imwrite("../images/ball10/first-dilate.jpg", mask);
+        for (int i = 0; i < S_ERODE; i++)
+            erode(mask, mask, ellipse);
+        imwrite("../images/ball10/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball10/ball10.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        imwrite("../images/ball10/balls.jpg", bgr);
+    }
+    // GET BEISEBOL BALL
+    {
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        getMaskFromHSV(hsv, mask, -1, 180, 0, 255, 0, 190);
+        getMaskFromHSV(circleImg, aux, 0, 15);
+        mask |= aux;
+        imwrite("../images/ball11/initial_mask.jpg", mask);
+        F_ERODE = 0, F_DILATE = 20, S_ERODE = 15;
+        for (int i = 0; i < F_ERODE; i++)
+            erode(mask, mask, rec);
+        imwrite("../images/ball11/first-erode.jpg", mask);
+        for (int i = 0; i < F_DILATE; i++)
+            dilate(mask, mask, rec);
+        imwrite("../images/ball11/first-dilate.jpg", mask);
+        for (int i = 0; i < S_ERODE; i++)
+            erode(mask, mask, ellipse);
+        imwrite("../images/ball11/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball11/ball11.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        imwrite("../images/ball12/ball12.jpg", bgr);
     }
     return 0;
 }
