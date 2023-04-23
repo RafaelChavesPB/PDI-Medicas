@@ -108,6 +108,16 @@ int main(int argc, char** argv){
         cv::Canny(blurred_imgGray, blurred_canny, 100, 200);
         printf("Canny done\n");
 
+
+        cv::Mat blurred_point, point_matrix;
+        cv::Mat point_kernel = (cv::Mat_<char>(3, 3) << 1, 1, 1, 1, -8, 1, 1, 1, 1);
+        cv::filter2D(imgGray, point_matrix, CV_16S, point_kernel);
+        cv::filter2D(blurred_imgGray, blurred_point, CV_16S, point_kernel);
+        cv::convertScaleAbs(point_matrix, point_matrix);
+        cv::convertScaleAbs(blurred_point, blurred_point);
+        printf("Point done\n");
+
+
         // converter a imagem para um vetor de pontos
         cv::Mat points;
         image.reshape(1, image.rows * image.cols).convertTo(points, CV_32F);
@@ -115,7 +125,7 @@ int main(int argc, char** argv){
         // executar o algoritmo k-means
         int K = 4; // número de clusters
         cv::Mat labels, centers;
-        kmeans(points, K, labels, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::MAX_ITER, 10, 1.0), 3, cv::KMEANS_PP_CENTERS, centers);
+        cv::kmeans(points, K, labels, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::MAX_ITER, 10, 1.0), 3, cv::KMEANS_PP_CENTERS, centers);
 
         // atualizar as cores dos pixels na imagem original
         cv::Mat kmeans_image(image.size(), image.type());
@@ -124,7 +134,17 @@ int main(int argc, char** argv){
             int cluster_id = labels.at<int>(i);
             kmeans_image.at<cv::Vec3b>(i) = centers.at<cv::Vec3f>(cluster_id);
         }
+        // printf("Points\n");
+        // for(int i = 0; i < K; i++){
+        //     printf("%d: ", i + 1);
+        //     for(int j = 0; j < labels.at<int>(i); j++){
+        //         printf("%d ", labels.at<int>(j));
+        //     }
+        //     printf("\n");
+        // }
+        
         printf("Kmeans done\n");
+
 
 
         // Gerando os resultados
@@ -205,6 +225,13 @@ int main(int argc, char** argv){
         createFolder((folderName + "/KMEANS").c_str());
         path = folderName + "/KMEANS/";
         cv::imwrite(path + "kmeans.png", kmeans_image);
+
+        createFolder((folderName + "/POINT").c_str());
+        path = folderName + "/POINT/";
+        cv::imwrite(path + "point.png", point_matrix);
+        cv::imwrite(path + "blurred_point.png", blurred_point);
+
+
 
         printf("Processed image %s\n", imgName.c_str());
 
