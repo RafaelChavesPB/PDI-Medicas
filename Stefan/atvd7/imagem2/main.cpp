@@ -83,8 +83,6 @@ void drawCircle(cv::Mat &src, std::vector<cv::Vec3f> &circles){
     }
 }
 
-
-
 int main(int argc, char** argv){
     if(argc < 2){
         printf("This script needs at least one argument, which must be a image file\n");
@@ -126,6 +124,10 @@ int main(int argc, char** argv){
         
         int num = 0;
         /////////////////////////////////////////// PARTE 1 ///////////////////////////////////////////////////////////
+        /* 
+            Detect circles in image, fill inside it with white color. Otherwise change pixel value to black.
+            It should give the components from all balls except the football.
+        */ 
         std::cerr << "\nFirst part...\n";
     
         path = folderName + "/2-first_part/";
@@ -152,6 +154,10 @@ int main(int argc, char** argv){
 
         std::cerr << "First part done\n";
         /////////////////////////////////////////// PARTE 2 ///////////////////////////////////////////////////////////
+        /* Erase all circles and binarize lefting image, dilate and erode certain number of times.
+        It should give the components from football
+        */ 
+
         std::cerr << "\nSecond part...\n";
 
         path = folderName + "/3-second_part/";
@@ -199,7 +205,9 @@ int main(int argc, char** argv){
         cv::imwrite(path + std::to_string(++num) + "dilate_erode_process.png", parte2);
 
         std::cerr << "Second part done.\n";
-////////////////////////////////////////////////// PROCESSANDO COMPONENTES ////////////////////
+////////////////////////////////////////////////// PROCESSANDO COMPONENTES /////////////////////////////////////
+        /* If a wite pixel is found, run a dfs from it, the result should be the component */
+
         std::cerr << "\nLooking for components...\n";
 
         std::vector<cv::Mat> ans;
@@ -241,7 +249,8 @@ int main(int argc, char** argv){
         }
 
         /////////////////////////////////////////// Final Result //////////////////////////////////////////////////
-        std::cerr << "\nFound " << ans.size() << " components\n";
+        /* Go in each component and get the result */
+        std::cerr << "Found " << ans.size() << " components\n\n";
         int x = 1;
 
         cv::Mat temp;
