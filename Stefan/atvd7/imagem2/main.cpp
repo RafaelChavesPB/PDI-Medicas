@@ -107,14 +107,14 @@ int main(int argc, char** argv){
         // Sets path variabel for future work
         std::string path = "";
         
-        createFolder((folderName + "/default").c_str());
-        createFolder((folderName + "/first_part").c_str());
-        createFolder((folderName + "/second_part").c_str());
-        createFolder((folderName + "/final_part").c_str());
-        createFolder((folderName + "/final_part/all_color").c_str());
-        createFolder((folderName + "/second_part/first_kill").c_str());
-        createFolder((folderName + "/second_part/second_kill").c_str());
-        path = folderName + "/default/";
+        createFolder((folderName + "/1-default").c_str());
+        createFolder((folderName + "/2-first_part").c_str());
+        createFolder((folderName + "/3-second_part").c_str());
+        createFolder((folderName + "/4-final_part").c_str());
+        createFolder((folderName + "/4-final_part/all_color").c_str());
+        createFolder((folderName + "/3-second_part/first_kill").c_str());
+        createFolder((folderName + "/3-second_part/second_kill").c_str());
+        path = folderName + "/1-default/";
         /////////////////////////// Gray Images //////////////////////////////////
 
         // Gray Image
@@ -128,7 +128,7 @@ int main(int argc, char** argv){
         /////////////////////////////////////////// PARTE 1 ///////////////////////////////////////////////////////////
         std::cerr << "\nFirst part...\n";
     
-        path = folderName + "/first_part/";
+        path = folderName + "/2-first_part/";
         
         std::vector<cv::Vec3f> circles;
         cv::Mat parte1 = imgGray.clone();
@@ -154,7 +154,7 @@ int main(int argc, char** argv){
         /////////////////////////////////////////// PARTE 2 ///////////////////////////////////////////////////////////
         std::cerr << "\nSecond part...\n";
 
-        path = folderName + "/second_part/";
+        path = folderName + "/3-second_part/";
 
         circles.clear();
         cv::Mat parte2 = imgGray.clone();
@@ -167,7 +167,7 @@ int main(int argc, char** argv){
         drawCircle(parte2, circles);
         cv::imwrite(path + std::to_string(++num) + "circle_drawn.png", parte2);
 
-        path = folderName + "/second_part/first_kill/";
+        path = folderName + "/3-second_part/first_kill/";
         for(int idx = 0; idx < circles.size(); idx++){
             cv::Vec3i c = circles[idx];
             dfs1(parte2, c[1], c[0]);
@@ -175,7 +175,7 @@ int main(int argc, char** argv){
         }
         cv::imwrite(path + std::to_string(++num) + "after_all_first_dfs.png", parte2);
 
-        path = folderName + "/second_part/second_kill/";
+        path = folderName + "/3-second_part/second_kill/";
         for(int idx = 0; idx < circles.size(); idx++){
             cv::Vec3i c = circles[idx];
             dfs3(parte2, c[1], c[0]);
@@ -183,7 +183,7 @@ int main(int argc, char** argv){
         }
         cv::imwrite(path + std::to_string(++num) + "after_all_second_dfs.png", parte2);
 
-        path = folderName + "/second_part/";
+        path = folderName + "/3-second_part/";
         cv::threshold(parte2, parte2, 130, 255, cv::THRESH_BINARY_INV);
         cv::imwrite(path + std::to_string(++num) + "binarized.png", parte2);
 
@@ -246,14 +246,14 @@ int main(int argc, char** argv){
 
         cv::Mat temp;
         for(auto &item : ans){
-            createFolder((folderName + "/final_part/Ball" + std::to_string(x++)).c_str());
-            path = folderName + "/final_part/Ball" + std::to_string(x - 1) + "/";
+            createFolder((folderName + "/4-final_part/Ball" + std::to_string(x++)).c_str());
+            path = folderName + "/4-final_part/Ball" + std::to_string(x - 1) + "/";
             cv::imwrite(path + std::to_string(++num) + "mask.png", item);
             temp = item & imgGray;
             cv::imwrite(path + std::to_string(++num) + "gray.png", temp);
             multiply_color(image, temp, item);
             cv::imwrite(path + std::to_string(++num) + "color.png", temp);
-            path = folderName + "/final_part/all_color/";
+            path = folderName + "/4-final_part/all_color/";
             cv::imwrite(path + std::to_string(++num) + "ball" + std::to_string(x - 1) + ".png", temp);
         }
 
