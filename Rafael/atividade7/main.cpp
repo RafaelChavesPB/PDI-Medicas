@@ -147,7 +147,7 @@ int main()
 
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
-        getMaskFromHSV(hsv, mask, 28, 40, 128, 256);
+        getMaskFromHSV(hsv, mask, 28, 40, 128);
         imwrite("../images/ball4/initial_mask.jpg", mask);
         F_DILATE = 15, S_ERODE = 12;
         for (int i = 0; i < F_DILATE; i++)
