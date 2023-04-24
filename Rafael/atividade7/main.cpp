@@ -272,10 +272,10 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         getMaskFromHSV(hsv, mask, 115, 120, 5, 10);
-        getMaskFromHSV(circleImg, aux, 90, 120);
-        mask |= aux;
+        // getMaskFromHSV(circleImg, aux, 90, 120);
+        // mask |= aux;
         imwrite("../images/ball9/initial_mask.jpg", mask);
-        F_ERODE = 1, F_DILATE = 20, S_ERODE = 15;
+        F_ERODE = 1, F_DILATE = 40, S_ERODE = 15;
         for (int i = 0; i < F_ERODE; i++)
             erode(mask, mask, rec);
         imwrite("../images/ball9/first-erode.jpg", mask);
@@ -295,10 +295,10 @@ int main()
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         getMaskFromHSV(hsv, mask, 0, 15);
-        getMaskFromHSV(circleImg, aux, 120, 150);
-        mask |= aux;
+        // getMaskFromHSV(circleImg, aux, 120, 150);
+        // mask |= aux;
         imwrite("../images/ball10/initial_mask.jpg", mask);
-        F_ERODE = 1, F_DILATE = 20, S_ERODE = 15;
+        F_ERODE = 1, F_DILATE = 32, S_ERODE = 15;
         for (int i = 0; i < F_ERODE; i++)
             erode(mask, mask, rec);
         imwrite("../images/ball10/first-erode.jpg", mask);
@@ -313,15 +313,15 @@ int main()
         applyMaskBGR(bgr, bgr, mask, true, true);
         imwrite("../images/ball10/balls.jpg", bgr);
     }
-    // GET BEISEBOL BALL
+    // GET VOLEI BALL
     {
         cvtColor(bgr, gray, COLOR_BGR2GRAY);
         cvtColor(bgr, hsv, COLOR_BGR2HSV);
         getMaskFromHSV(hsv, mask, -1, 180, 0, 255, 0, 190);
-        getMaskFromHSV(circleImg, aux, 0, 15);
-        mask |= aux;
+        // getMaskFromHSV(circleImg, aux, 0, 15);
+        // mask |= aux;
         imwrite("../images/ball11/initial_mask.jpg", mask);
-        F_ERODE = 0, F_DILATE = 20, S_ERODE = 15;
+        F_ERODE = 0, F_DILATE = 30, S_ERODE = 15;
         for (int i = 0; i < F_ERODE; i++)
             erode(mask, mask, rec);
         imwrite("../images/ball11/first-erode.jpg", mask);

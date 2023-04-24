@@ -78,27 +78,147 @@ int main()
     Mat cross = getStructuringElement(1, Size(3, 3));
     Mat ellipse = getStructuringElement(1, Size(5, 5));
 
-    // BOLE FUTEBOL AMERICANO
-    // 128 - Basquete total, tenis total, futebol americano total, volei total.
-    // 64 - futebol americano bem - volei e basquete faltando partes
-    // 32 - partes mais escuras da bola de futebol
-    // 0 - 64, 0 - 90, faltam partes mas da pra erodir e expandir
-    // r 0 - 128 - não tem nada que possa usar mas posso eliminar
-    // aux = imread("../images/channels/hsv/S/7.jpg", IMREAD_GRAYSCALE);
-    getMaskFromHSV(bgr, mask, 0, 64, 32, 90,  135);
-    imwrite("../images/ball1/mask0.jpg", mask);
-    std::vector<int> iteractionsBall1 = {1, 10, 10, 15, 5};
-    for(int i = 0; i < iteractionsBall1.size(); i++){
-        if(i&1)
-            dilate(mask, mask, rec, Point(-1,-1), iteractionsBall1[i]);
-        else
-            erode(mask, mask, rec, Point(-1,-1), iteractionsBall1[i]);
-        imwrite(std::string("../images/ball1/mask") + std::to_string(i+1) + std::string(".jpg"), mask);
+    // BOLA FUTEBOL AMERICANO
+    {
+        getMaskFromHSV(bgr, mask, 0, 64, 32, 90, 135);
+        imwrite("../images/ball1/mask0.jpg", mask);
+        std::vector<int> iteractionsBall1 = {1, 10, 10, 16, 5};
+        for (int i = 0; i < iteractionsBall1.size(); i++)
+        {
+            if (i & 1)
+                dilate(mask, mask, rec, Point(-1, -1), iteractionsBall1[i]);
+            else
+                erode(mask, mask, rec, Point(-1, -1), iteractionsBall1[i]);
+            imwrite(std::string("../images/ball1/mask") + std::to_string(i + 1) + std::string(".jpg"), mask);
+        }
+        imwrite("../images/ball1/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball1/ball-a.jpg", ball);
+        applyMaskBGR(bgr, ball, mask);
+        imwrite("../images/ball1/ball-b.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        imwrite("../images/ball2/balls.jpg", bgr);
     }
-    applyMaskBGR(bgr, ball, mask, false, true);
-    imwrite("../images/ball1/ball-a.jpg", ball);
-    applyMaskBGR(bgr, ball, mask);
-    imwrite("../images/ball1/ball-b.jpg", ball);
+
+    // BOLA BASQUETE
+    {
+        getMaskFromHSV(hsv, mask, 7, 11, 150);
+        imwrite("../images/ball2/mask0.jpg", mask);
+        std::vector<int> iteractionsBall2 = {0, 3};
+        for (int i = 0; i < iteractionsBall2.size(); i++)
+        {
+            if (i & 1)
+                dilate(mask, mask, rec, Point(-1, -1), iteractionsBall2[i]);
+            else
+                erode(mask, mask, rec, Point(-1, -1), iteractionsBall2[i]);
+            imwrite(std::string("../images/ball2/mask") + std::to_string(i + 1) + std::string(".jpg"), mask);
+        }
+        imwrite("../images/ball2/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball2/ball-a.jpg", ball);
+        applyMaskBGR(bgr, ball, mask);
+        imwrite("../images/ball2/ball-b.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        imwrite("../images/ball3/balls.jpg", bgr);
+    }
+
+    // BOLA TENNIS
+    {
+        getMaskFromHSV(hsv, mask, 39, 40, 128);
+        imwrite("../images/ball3/mask0.jpg", mask);
+        std::vector<int> iteractionsBall3 = {0, 8};
+        for (int i = 0; i < iteractionsBall3.size(); i++)
+        {
+            if (i & 1)
+                dilate(mask, mask, rec, Point(-1, -1), iteractionsBall3[i]);
+            else
+                erode(mask, mask, rec, Point(-1, -1), iteractionsBall3[i]);
+            imwrite(std::string("../images/ball3/mask") + std::to_string(i + 1) + std::string(".jpg"), mask);
+        }
+        imwrite("../images/ball3/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball3/ball-a.jpg", ball);
+        applyMaskBGR(bgr, ball, mask);
+        imwrite("../images/ball3/ball-b.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        imwrite("../images/ball4/balls.jpg", bgr);
+    }
+
+    // BOLA VOLEI
+    {
+        getMaskFromHSV(hsv, mask, 12, 33, 128);
+        imwrite("../images/ball4/mask0.jpg", mask);
+        std::vector<int> iteractionsBall4 = {0, 3};
+        for (int i = 0; i < iteractionsBall4.size(); i++)
+        {
+            if (i & 1)
+                dilate(mask, mask, rec, Point(-1, -1), iteractionsBall4[i]);
+            else
+                erode(mask, mask, rec, Point(-1, -1), iteractionsBall4[i]);
+            imwrite(std::string("../images/ball4/mask") + std::to_string(i + 1) + std::string(".jpg"), mask);
+        }
+        imwrite("../images/ball4/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball4/ball-a.jpg", ball);
+        applyMaskBGR(bgr, ball, mask);
+        imwrite("../images/ball4/ball-b.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        imwrite("../images/ball5/balls.jpg", bgr);
+    }
+
+    // BOLA BEISEBALL
+    {
+        getMaskFromHSV(hsv, mask, 0, 90, 60, 255, 0, 228);
+        imwrite("../images/ball5/mask0.jpg", mask);
+        std::vector<int> iteractionsBall5 = {0, 30, 22};
+        for (int i = 0; i < iteractionsBall5.size(); i++)
+        {
+            if (i & 1)
+                dilate(mask, mask, rec, Point(-1, -1), iteractionsBall5[i]);
+            else
+                erode(mask, mask, rec, Point(-1, -1), iteractionsBall5[i]);
+            imwrite(std::string("../images/ball5/mask") + std::to_string(i + 1) + std::string(".jpg"), mask);
+        }
+        imwrite("../images/ball5/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball5/ball-a.jpg", ball);
+        applyMaskBGR(bgr, ball, mask);
+        imwrite("../images/ball5/ball-b.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+        imwrite("../images/ball6/balls.jpg", bgr);
+    }
+    // BOLA BEISEBALL
+    {
+        getMaskFromHSV(hsv, mask, 90, 180, 10, 255);
+        imwrite("../images/ball6/mask0.jpg", mask);
+        std::vector<int> iteractionsBall6 = {0, 15};
+        for (int i = 0; i < iteractionsBall6.size(); i++)
+        {
+            if (i & 1)
+                dilate(mask, mask, rec, Point(-1, -1), iteractionsBall6[i]);
+            else
+                erode(mask, mask, rec, Point(-1, -1), iteractionsBall6[i]);
+            imwrite(std::string("../images/ball6/mask") + std::to_string(i + 1) + std::string(".jpg"), mask);
+        }
+        imwrite("../images/ball6/mask.jpg", mask);
+        applyMaskBGR(bgr, ball, mask, false, true);
+        imwrite("../images/ball6/ball-a.jpg", ball);
+        applyMaskBGR(bgr, ball, mask);
+        imwrite("../images/ball6/ball-b.jpg", ball);
+        applyMaskBGR(bgr, bgr, mask, true, true);
+        cvtColor(bgr, gray, COLOR_BGR2GRAY);
+        cvtColor(bgr, hsv, COLOR_BGR2HSV);
+    }
     // AUXILIAR
     {
         // // GET BIT LAYERS:
