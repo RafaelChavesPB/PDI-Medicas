@@ -1,9 +1,14 @@
 #include "../../helpers/helpers.h"
+#include "color_ranges.h"
 #include <stack>
 #include <vector>
+#include <tuple>
+
 
 int di[8] = {0, 0, 1, -1, 1, 1, -1, -1};
 int dj[8] = {1, -1, 0, 0, 1, -1, -1, 1};
+
+int whichtype(std::map<int, int> &type, cv::Mat &image_hsv, int row, int col);
 
 void dfs1(cv::Mat &a, int i, int j){
     std::stack<std::pair<int, int>> s;
@@ -22,7 +27,7 @@ void dfs1(cv::Mat &a, int i, int j){
     }
 }
 
-void dfs2(cv::Mat &a, int i, int j, std::vector<std::vector<bool>> &vis){
+void dfs2(cv::Mat &a, int i, int j, std::vector<std::vector<bool>> &vis, std::map<int, int> &type, cv::Mat &image){
     std::stack<std::pair<int, int>> s;
     s.push({i, j});
     while(!s.empty()){
@@ -30,6 +35,8 @@ void dfs2(cv::Mat &a, int i, int j, std::vector<std::vector<bool>> &vis){
         s.pop();
         vis[row][col] = true;
         a.at<uchar>(row, col) = 128;
+        int ball_type = whichtype(type, image, row, col);
+        if(ball_type != -1) type[ball_type]++;
         for(int k = 0; k < 8; k++){
             int nxi = di[k] + row;
             int nxj = dj[k] + col;
@@ -71,6 +78,20 @@ void multiply_color(cv::Mat &src, cv::Mat &dst, cv::Mat &bin){
     }
 }
 
+void multiply_color2(cv::Mat &src, cv::Mat &dst, cv::Mat &bin){
+    dst = src.clone();
+    for (int i = 0; i < dst.rows; i++)
+    {
+        for (int j = 0; j < dst.cols; j++)
+        {
+            cv::Vec3b pixel = src.at<cv::Vec3b>(i, j);
+            for(int k = 0; k < 3; k++){
+                dst.at<cv::Vec3b>(i, j)[k] = (bin.at<uchar>(i, j) == 0? 255 : dst.at<cv::Vec3b>(i, j)[k]);
+            }
+        }
+    }
+}
+
 void drawCircle(cv::Mat &src, std::vector<cv::Vec3f> &circles){
     for( size_t idx = 0; idx < circles.size(); idx++)
     {
@@ -82,6 +103,42 @@ void drawCircle(cv::Mat &src, std::vector<cv::Vec3f> &circles){
     cv::circle(src, center, radius, cv::Scalar(0), 2, cv::LINE_8);
     }
 }
+
+void drawEllipses(cv::Mat &src, cv::Mat &dst, std::vector<cv::Point2i> &centers){
+        std::vector<std::vector<cv::Point> > contours;
+
+        cv::findContours(src, contours, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0,0));
+        std::cerr << "contours size = " << contours.size() << '\n';
+
+        cv::RotatedRect rotRecs[contours.size()];
+        cv::Mat drawing = cv::Mat::zeros(src.size(), CV_8UC1);
+        for(int i = 0; i < contours.size(); i++){
+            rotRecs[i] = fitEllipse(contours[i]);
+            centers.push_back((cv::Point2i)rotRecs[i].center);
+            cv::ellipse(drawing, rotRecs[i], cv::Scalar(255), 1, cv::LINE_8);
+        } 
+        dst = drawing;
+}
+
+bool isInRange(std::tuple<int, int, int> &a, std::tuple<int, int, int> &b, cv::Vec<uchar, 3> &pixel){
+    return 
+        pixel[0] >= std::get<0>(a) and pixel[0] <= std::get<0>(b) and
+        pixel[1] >= std::get<1>(a) and pixel[1] <= std::get<1>(b) and
+        pixel[2] >= std::get<2>(a) and pixel[2] <= std::get<2>(b);
+}
+
+int whichtype(std::map<int, int> &type, cv::Mat &image_hsv, int row, int col){
+    int idx = 0;
+    for(auto &x : balls_color_ranges){
+        auto t1 = x.first;
+        auto t2 = x.second;
+        auto pixel = image_hsv.at<cv::Vec3b>(row, col);
+        if(isInRange(t1, t2, pixel)) return idx;
+        idx++;
+    }
+    return -1;
+}
+
 
 int main(int argc, char** argv){
     if(argc < 2){
@@ -188,10 +245,25 @@ int main(int argc, char** argv){
             cv::imwrite(path + std::to_string(++num) + "dfs" + std::to_string(idx + 1) + ".png", parte2);
         }
         cv::imwrite(path + std::to_string(++num) + "after_all_second_dfs.png", parte2);
+        cv::Mat hsv_p2;
+        cv::cvtColor(parte2, hsv_p2, cv::COLOR_GRAY2BGR);
+        cv::cvtColor(hsv_p2, hsv_p2, cv::COLOR_BGR2HSV);
+
 
         path = folderName + "/3-second_part/";
+        cv::Mat mask1;
+        cv::inRange(parte2, cv::Scalar(0, 0, 134), cv::Scalar(101, 91, 220), mask1);
+        cv::imwrite(path + std::to_string(++num) + "mask.png", mask1);
+        cv::imwrite(path + std::to_string(++num) + "invmask.png", ~mask1);
+        cv::imwrite(path + std::to_string(++num) + "thetest.png", (mask1 & parte2));
+        cv::Mat y = mask1 & parte2;
+        std::vector<cv::Point2i> centers;
+        // drawEllipses(y, y, centers);
+
+
         cv::threshold(parte2, parte2, 130, 255, cv::THRESH_BINARY_INV);
         cv::imwrite(path + std::to_string(++num) + "binarized.png", parte2);
+
 
         for(int k = 0; k < 4; k++)
             cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
@@ -211,17 +283,23 @@ int main(int argc, char** argv){
         std::cerr << "\nLooking for components...\n";
 
         std::vector<cv::Mat> ans;
+        std::vector<std::vector<cv::Mat>> same_component(balls_color_ranges.size());
         cv::Mat component;
         std::vector<std::vector<bool>> vis1(parte1.rows, std::vector<bool>(parte1.cols, 0));
         std::vector<std::vector<bool>> vis2(parte2.rows, std::vector<bool>(parte2.cols, 0));
-
+        cv::Mat image_hsv;
+        cv::cvtColor(image, image_hsv, cv::COLOR_BGR2HSV);
         for(int r = 0; r < parte1.rows; r++){
             for(int c = 0; c < parte1.cols; c++){
                 uchar &point = parte1.at<uchar>(r, c);
                 if(not vis1[r][c] and point == 255){
                     std::cerr << "Component starting in " << r << ' ' << c << " from part 1";
+                    std::map<int, int> type;
                     component = parte1.clone();
-                    dfs2(component, r, c, vis1);
+                    dfs2(component, r, c, vis1, type, image_hsv);
+                    int val = std::max_element(begin(type), end(type), [](const auto &a, const auto &b){
+                        return a.second < b.second;
+                    })->first;
                     std::cerr << " -> dfs done" << '\n';
                     for(int i = 0; i < component.rows; i++){
                         for(int j = 0; j < component.cols; j++){
@@ -229,24 +307,19 @@ int main(int argc, char** argv){
                             p = p == 128? 255 : 0;
                         }
                     }
-                    ans.push_back(component);
-                }
-                uchar &p2 = parte2.at<uchar>(r, c);
-                if(not vis2[r][c] and p2 == 255){
-                    std::cerr << "Component starting in " << r << ' ' << c << " from part 2";
-                    component = parte2.clone();
-                    dfs2(component, r, c, vis2);
-                    std::cerr << " -> dfs done" << '\n';
-                    for(int i = 0; i < component.rows; i++){
-                        for(int j = 0; j < component.cols; j++){
-                            uchar &p = component.at<uchar>(i, j);
-                            p = p == 128? 255 : 0;
-                        }
-                    }
-                    ans.push_back(component);
+                    same_component[val].push_back(component);
                 }
             }
         }
+
+        for(auto &components: same_component){
+            cv::Mat temp = cv::Mat::zeros(imgGray.size(), CV_8UC1);
+            for(int i = 0; i < components.size(); i++){
+                temp += components[i];
+            }
+            ans.push_back(temp);
+        }
+        ans.push_back(parte2);
 
         /////////////////////////////////////////// Final Result //////////////////////////////////////////////////
         /* Go in each component and get the result */
@@ -267,7 +340,6 @@ int main(int argc, char** argv){
         }
 
         printf("\nProcessing for \"%s\" has ended.\n", imgName.c_str());
-
     }
     return 0;
 }
