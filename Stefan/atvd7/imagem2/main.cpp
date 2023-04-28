@@ -4,7 +4,6 @@
 #include <vector>
 #include <tuple>
 
-
 int di[8] = {0, 0, 1, -1, 1, 1, -1, -1};
 int dj[8] = {1, -1, 0, 0, 1, -1, -1, 1};
 
@@ -40,7 +39,7 @@ void dfs2(cv::Mat &a, int i, int j, std::vector<std::vector<bool>> &vis, std::ma
         for(int k = 0; k < 8; k++){
             int nxi = di[k] + row;
             int nxj = dj[k] + col;
-            if(not (nxi >= 0 and nxi < a.rows and nxj >= 0 and nxj < a.cols)) continue;
+            if(not (nxi >= 0 and nxi < a.rows and nxj >= 0 and nxj < a.cols) or vis[nxi][nxj]) continue;
             uchar &point = a.at<uchar>(nxi, nxj);
             if(point == 255) s.push({nxi, nxj});
         }
@@ -73,20 +72,6 @@ void multiply_color(cv::Mat &src, cv::Mat &dst, cv::Mat &bin){
             cv::Vec3b pixel = src.at<cv::Vec3b>(i, j);
             for(int k = 0; k < 3; k++){
                 dst.at<cv::Vec3b>(i, j)[k] = (bin.at<uchar>(i, j) == 255) * pixel[k];
-            }
-        }
-    }
-}
-
-void multiply_color2(cv::Mat &src, cv::Mat &dst, cv::Mat &bin){
-    dst = src.clone();
-    for (int i = 0; i < dst.rows; i++)
-    {
-        for (int j = 0; j < dst.cols; j++)
-        {
-            cv::Vec3b pixel = src.at<cv::Vec3b>(i, j);
-            for(int k = 0; k < 3; k++){
-                dst.at<cv::Vec3b>(i, j)[k] = (bin.at<uchar>(i, j) == 0? 255 : dst.at<cv::Vec3b>(i, j)[k]);
             }
         }
     }
@@ -165,12 +150,12 @@ int main(int argc, char** argv){
         createFolder((folderName + "/1-default").c_str());
         createFolder((folderName + "/2-first_part").c_str());
         createFolder((folderName + "/3-second_part").c_str());
-        createFolder((folderName + "/4-final_part").c_str());
-        createFolder((folderName + "/4-final_part/all_color").c_str());
+        createFolder((folderName + "/4-third_part").c_str());
+        createFolder((folderName + "/5-final_part").c_str());
+        createFolder((folderName + "/5-final_part/all_color").c_str());
         createFolder((folderName + "/3-second_part/first_kill").c_str());
         createFolder((folderName + "/3-second_part/second_kill").c_str());
         path = folderName + "/1-default/";
-        /////////////////////////// Gray Images //////////////////////////////////
 
         // Gray Image
         cv::Mat imgGray = cv::imread(argv[i + 1], cv::IMREAD_GRAYSCALE);
@@ -180,7 +165,8 @@ int main(int argc, char** argv){
         cv::imwrite(path + "grayscale.png", imgGray);
         
         int num = 0;
-        /////////////////////////////////////////// PARTE 1 ///////////////////////////////////////////////////////////
+        
+        /////////////////////////////////////////// FIRST PART ///////////////////////////////////////////////////////////
         /* 
             Detect circles in image, fill inside it with white color. Otherwise change pixel value to black.
             It should give the components from all balls except the football.
@@ -198,7 +184,8 @@ int main(int argc, char** argv){
         std::cerr << "Found " << circles.size() << " circles\n";
         drawCircle(parte1, circles);
         cv::imwrite(path + std::to_string(++num) + "circle_drawn.png", parte1);
-        dfs1(parte1, 0, 0);
+        cv::Mat circles_drawn = parte1.clone();
+        dfs1(parte1, 0, 0); // all outside circles go to black
         cv::imwrite(path + std::to_string(++num) + "after_dfs.png", parte1);
 
         for(int r = 0; r < parte1.rows; r++){
@@ -210,24 +197,17 @@ int main(int argc, char** argv){
         cv::imwrite(path + std::to_string(++num) + "bin_components.png", parte1);
 
         std::cerr << "First part done\n";
-        /////////////////////////////////////////// PARTE 2 ///////////////////////////////////////////////////////////
-        /* Erase all circles and binarize lefting image, dilate and erode certain number of times.
-        It should give the components from football
+        /////////////////////////////////////////// SECOND PART ///////////////////////////////////////////////////////////
+        /*  
+            Erase all balls identified with circles and binarize lefting football ball. Aplly closing operation certain number of times.
+            Run convex hull and get the football component
         */ 
 
         std::cerr << "\nSecond part...\n";
 
         path = folderName + "/3-second_part/";
 
-        circles.clear();
-        cv::Mat parte2 = imgGray.clone();
-        cv::HoughCircles(parte2, circles, cv::HOUGH_GRADIENT, 1,
-                    imgGray.rows/64,  // change this value to detect circles with different distances to each other
-                    100, 40, 25, 45 // change the last two parameters
-        );
-        std::cerr << "Found " << circles.size() << " circles\n";
-
-        drawCircle(parte2, circles);
+        cv::Mat parte2 = circles_drawn;
         cv::imwrite(path + std::to_string(++num) + "circle_drawn.png", parte2);
 
         path = folderName + "/3-second_part/first_kill/";
@@ -249,69 +229,112 @@ int main(int argc, char** argv){
         cv::cvtColor(parte2, hsv_p2, cv::COLOR_GRAY2BGR);
         cv::cvtColor(hsv_p2, hsv_p2, cv::COLOR_BGR2HSV);
 
-
         path = folderName + "/3-second_part/";
-        cv::Mat mask1;
-        cv::inRange(parte2, cv::Scalar(0, 0, 134), cv::Scalar(101, 91, 220), mask1);
-        cv::imwrite(path + std::to_string(++num) + "mask.png", mask1);
-        cv::imwrite(path + std::to_string(++num) + "invmask.png", ~mask1);
-        cv::imwrite(path + std::to_string(++num) + "thetest.png", (mask1 & parte2));
-        cv::Mat y = mask1 & parte2;
-        std::vector<cv::Point2i> centers;
-        // drawEllipses(y, y, centers);
-
-
+    
         cv::threshold(parte2, parte2, 130, 255, cv::THRESH_BINARY_INV);
         cv::imwrite(path + std::to_string(++num) + "binarized.png", parte2);
 
+        bool morph_rect = true;
+        int x = 1;
+        for(int k = 1; k <= 200; k++){
+            if(k % 20 == 0){
+                morph_rect = not morph_rect;
+                cv::imwrite(path + std::to_string(++num) + "morph" + std::to_string(x++) + ".png", parte2);
+            }
+            if(morph_rect)
+                cv::morphologyEx(parte2, parte2, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5,5)));
+            else
+                cv::morphologyEx(parte2, parte2, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(5,5)));
+        }
+        cv::erode(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
+        cv::imwrite(path + std::to_string(++num) + "erode.png", parte2);
 
-        for(int k = 0; k < 4; k++)
-            cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-        for(int k = 0; k < 6; k++)
-            cv::erode(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-        for(int k = 0; k < 3; k++)
-            cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-        cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 3)));
-        cv::dilate(parte2, parte2, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 5)));
+        std::vector< std::vector<cv::Point> > contours; // list of contour points
+        std::vector<cv::Vec4i> hierarchy; // necessary for function
+
+        // find contours
+        cv::findContours(parte2, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+        // create hull array for convex hull points
+        std::vector< std::vector<cv::Point> > hull(contours.size());
+        for(int j = 0; j < contours.size(); j++)
+            cv::convexHull(cv::Mat(contours[j]), hull[j]);
         
-        cv::imwrite(path + std::to_string(++num) + "dilate_erode_process.png", parte2);
+        // create a blank image (black image)
+        cv::Mat drawing = cv::Mat::zeros(parte2.size(), CV_8UC1); 
+ 
+        for(int idx = 0; idx < contours.size(); idx++) {
+            cv::Scalar color = cv::Scalar(255); // white
+            cv::drawContours(drawing, hull, idx, color, 1, cv::LINE_8, std::vector<cv::Vec4i>(), 0, cv::Point());
+        }
+
+        cv::imwrite(path + std::to_string(++num) + "hull.png", drawing);
+        
+        // compute center of each hull element
+        std::vector<std::pair<int, int>> centers;
+        for(int idx = 0; idx < hull.size(); idx++){
+            int x_center = 0, y_center = 0;
+            for(int j = 0; j < hull[idx].size(); j++){
+                x_center += hull[idx][j].x;
+                y_center += hull[idx][j].y;
+            }
+            x_center /= hull[idx].size();
+            y_center /= hull[idx].size();
+            centers.push_back({y_center, x_center});
+        }
+
+        // fill all components with white color
+        for(auto &center_pair : centers) dfs3(drawing, center_pair.first, center_pair.second);
+
+        cv::imwrite(path + std::to_string(++num) + "mask_second_part.png", drawing);
+        parte2 = drawing;
 
         std::cerr << "Second part done.\n";
-////////////////////////////////////////////////// PROCESSANDO COMPONENTES /////////////////////////////////////
+
+////////////////////////////////////////////////// THIRD PART /////////////////////////////////////
         /* If a wite pixel is found, run a dfs from it, the result should be the component */
+        /* For each component, check what type of ball it is */
+
 
         std::cerr << "\nLooking for components...\n";
 
         std::vector<cv::Mat> ans;
         std::vector<std::vector<cv::Mat>> same_component(balls_color_ranges.size());
-        cv::Mat component;
         std::vector<std::vector<bool>> vis1(parte1.rows, std::vector<bool>(parte1.cols, 0));
-        std::vector<std::vector<bool>> vis2(parte2.rows, std::vector<bool>(parte2.cols, 0));
-        cv::Mat image_hsv;
+        cv::Mat image_hsv, component;
         cv::cvtColor(image, image_hsv, cv::COLOR_BGR2HSV);
+        x = 0;
+        path = folderName + "/4-third_part/";
+
         for(int r = 0; r < parte1.rows; r++){
             for(int c = 0; c < parte1.cols; c++){
                 uchar &point = parte1.at<uchar>(r, c);
                 if(not vis1[r][c] and point == 255){
-                    std::cerr << "Component starting in " << r << ' ' << c << " from part 1";
+                    x++;
+                    std::cerr << x << ". Component starting in " << r << ' ' << c << " from part 1";
                     std::map<int, int> type;
                     component = parte1.clone();
                     dfs2(component, r, c, vis1, type, image_hsv);
                     int val = std::max_element(begin(type), end(type), [](const auto &a, const auto &b){
                         return a.second < b.second;
                     })->first;
-                    std::cerr << " -> dfs done" << '\n';
                     for(int i = 0; i < component.rows; i++){
                         for(int j = 0; j < component.cols; j++){
                             uchar &p = component.at<uchar>(i, j);
+                            uchar &p1 = parte1.at<uchar>(i, j);
+                            p1 = p == 128? 100 : p1;
                             p = p == 128? 255 : 0;
                         }
                     }
+                    std::cerr << " -> dfs done" << '\n';
+                    cv::imwrite(path + std::to_string(++num) + "done" + std::to_string(x) +".png", parte1);
                     same_component[val].push_back(component);
                 }
+                vis1[r][c] = true;
             }
         }
 
+        // create mask of balls that are of the same type
         for(auto &components: same_component){
             cv::Mat temp = cv::Mat::zeros(imgGray.size(), CV_8UC1);
             for(int i = 0; i < components.size(); i++){
@@ -321,21 +344,21 @@ int main(int argc, char** argv){
         }
         ans.push_back(parte2);
 
-        /////////////////////////////////////////// Final Result //////////////////////////////////////////////////
-        /* Go in each component and get the result */
-        std::cerr << "Found " << ans.size() << " components\n\n";
-        int x = 1;
+        /////////////////////////////////////////// FINAL RESULT //////////////////////////////////////////////////
+        /* Go in each group of components and get the result */
+        std::cerr <<"Total " << x << " components and " << ans.size() << " groups\n\n";
+        x = 1;
 
         cv::Mat temp;
         for(auto &item : ans){
-            createFolder((folderName + "/4-final_part/Ball" + std::to_string(x++)).c_str());
-            path = folderName + "/4-final_part/Ball" + std::to_string(x - 1) + "/";
+            createFolder((folderName + "/5-final_part/Ball" + std::to_string(x++)).c_str());
+            path = folderName + "/5-final_part/Ball" + std::to_string(x - 1) + "/";
             cv::imwrite(path + std::to_string(++num) + "mask.png", item);
             temp = item & imgGray;
             cv::imwrite(path + std::to_string(++num) + "gray.png", temp);
             multiply_color(image, temp, item);
             cv::imwrite(path + std::to_string(++num) + "color.png", temp);
-            path = folderName + "/4-final_part/all_color/";
+            path = folderName + "/5-final_part/all_color/";
             cv::imwrite(path + std::to_string(++num) + "ball" + std::to_string(x - 1) + ".png", temp);
         }
 
