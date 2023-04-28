@@ -7,3 +7,5 @@ Makefile
 Results-*/
 *.o
 *.txt
+components/
+test_color/
