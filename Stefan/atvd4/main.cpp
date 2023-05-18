@@ -51,18 +51,6 @@ int main(int argc, char** argv){
         cv::cvtColor(image, hsv_img, cv::COLOR_BGR2HSV);
         cv::split(hsv_img, hsv_channel);
 
-        
-        // int maxval = -1;
-        // for(int i = 0; i < hsv_img.rows; i++){
-        //     for(int j = 0; j < hsv_img.cols; j++){
-        //         cv::Vec3b pixel = hsv_img.at<cv::Vec3b>(i, j);
-        //         printf("[%d, %d, %d] ", pixel[0], pixel[1], pixel[2]);
-        //         if(pixel[0] > maxval) maxval = pixel[0];
-        //     }
-        //     printf("\n");
-        // }
-        // printf("Max val = %d\n", maxval);
-
         // Folder for hsv images
         path = folderName + "/HSV";
         createFolder(path.c_str());
