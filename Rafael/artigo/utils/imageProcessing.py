@@ -58,9 +58,10 @@ def getElement(element=cv2.MORPH_RECT, size=(3, 3)):
 
 
 def countGroupMembers(startR, startC, mark, img, groupMarker):
-    counter = 0
+    count = 1
     queue = deque()
     queue.append((startR, startC))
+    groupMarker[startR][startC] = mark
     while (len(queue)):
         r, c = queue.popleft()
         for dr, dc in DIR:
@@ -74,27 +75,29 @@ def countGroupMembers(startR, startC, mark, img, groupMarker):
                 continue
             queue.append((nr, nc))
             groupMarker[nr][nc] = mark
-            counter += 1
-    return counter
+            count += 1
+    return count
 
 
 def removeSmallGroups(mask, threshhold=50):
     newMask = mask.copy()
-    groupMarker = np.zeros(mask.shape)
+    groupMarker = np.zeros(newMask.shape)
     mark = 1
-    for R in range(mask.shape[0]):
-        for C in range(mask.shape[1]):
-            if groupMarker[R][C] != 0 or mask[R][C] != WHITE:
+    for R in range(newMask.shape[0]):
+        for C in range(newMask.shape[1]):
+            if groupMarker[R][C] != 0 or newMask[R][C] != WHITE:
                 continue
-            members = countGroupMembers(R, C, mark, mask, groupMarker)
+            members = countGroupMembers(R, C, mark, newMask, groupMarker)
             if members < threshhold:
-                newMask[groupMarker == mark] = 0
+                newMask[groupMarker == mark] = BLACK
             mark += 1
     return newMask
 
 def fillGroup(startR, startC, startInterval, endInterval, img, mask, visited):
     queue = deque()
     queue.append((startR, startC))
+    count = 1
+    visited[startR][startC] = 1
     while (len(queue)):
         r, c = queue.popleft()
         for dr, dc in DIR:
@@ -106,11 +109,13 @@ def fillGroup(startR, startC, startInterval, endInterval, img, mask, visited):
                 continue
             if visited[nr][nc] != 0:
                 continue
-            if img[nc][nc] < startInterval or endInterval < img[nr][nc]:
+            if img[nr][nc] < startInterval or endInterval < img[nr][nc]:
                 continue
             queue.append((nr, nc))
             mask[nr][nc] = WHITE
             visited[nr][nc] = 1
+            count+=1
+    return count 
 
 
 def floodFill(startInterval, endInterval, img, mask):
@@ -138,5 +143,5 @@ def identifyVentricle(original):
     areaOfInterest = cv2.dilate(areaOfInterest, getElement(cv2.MORPH_CROSS, (7,7)), iterations=20)
     ventricleMask = cv2.bitwise_and(rawVentricleMaskWithoutBone, areaOfInterest)
     ventricleMask = floodFill(BEGIN_VENTRICLE_WINDOW, END_VENTRICLE_WINDOW, original, ventricleMask)
-    ventricleMask = removeSmallGroups(ventricleMask, 100)
-    return ventricleMask
+    ventricleMask = removeSmallGroups(ventricleMask)
+    return ventricleMask 
