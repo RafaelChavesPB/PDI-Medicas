@@ -4,6 +4,7 @@ import cv2
 
 def plotImage(img, size=(5, 5), title='window'):
     plt.figure(figsize=size)
+    plt.title(title)
     plt.imshow(img, cmap='gray')
 
 def showImage(img, title=''):
