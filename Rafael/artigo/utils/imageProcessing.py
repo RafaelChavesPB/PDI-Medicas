@@ -71,7 +71,7 @@ def countGroupMembers(startR, startC, mark, img, groupMarker):
                 continue
             if nc < 0 or img.shape[1] <= nc:
                 continue
-            if groupMarker[nr][nc] != 0 or img[nr][nc] != WHITE:
+            if groupMarker[nr][nc] != 0 or img[nr][nc] == BLACK:
                 continue
             queue.append((nr, nc))
             groupMarker[nr][nc] = mark
@@ -85,7 +85,7 @@ def removeSmallGroups(mask, threshhold=50):
     mark = 1
     for R in range(newMask.shape[0]):
         for C in range(newMask.shape[1]):
-            if groupMarker[R][C] != 0 or newMask[R][C] != WHITE:
+            if groupMarker[R][C] != 0 or newMask[R][C] == BLACK:
                 continue
             members = countGroupMembers(R, C, mark, newMask, groupMarker)
             if members < threshhold:
@@ -129,9 +129,10 @@ def floodFill(startInterval, endInterval, img, mask):
     return newMask
 
 def drawContour(img, mask):
+    contour_image = img.copy()
     edges =  cv2.Canny(mask, 85, 200)
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.INTERSECT_FULL)
-    contour_image = cv2.drawContours(img, contours, -1, (0, 255, 0), 2)
+    contour_image = cv2.drawContours(contour_image, contours, -1, (0, 255, 0), 2)
     return contour_image
 
 def identifyVentricle(original):
