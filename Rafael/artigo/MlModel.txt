@@ -1,0 +1,10 @@
+numpy
+keras
+tensorflow
+matplotlib
+pandas
+opencv-python
+pydicom
+pylibjpeg
+pylibjpeg-libjpeg
+
