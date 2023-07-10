@@ -4,9 +4,8 @@ from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from keras.preprocessing.image import ImageDataGenerator
 
 # Define the paths to your image repositories
-train_path = 'files/train'
-validation_path = 'files/validation'
-test_path = 'files/test'
+train_path = '/home/rafael/Desktop/train'
+test_path = '/home/rafael/Desktop/test'
 
 # Define the image size and number of classes
 img_size = (512, 512)
@@ -25,14 +24,6 @@ train_generator = datagen.flow_from_directory(
     shuffle=True
 )
 
-# Load and preprocess the validation data
-validation_generator = datagen.flow_from_directory(
-    validation_path,
-    target_size=img_size,
-    batch_size=32,
-    class_mode='categorical',
-    shuffle=True
-)
 
 # Load and preprocess the testing data
 test_generator = datagen.flow_from_directory(
@@ -67,7 +58,7 @@ model.add(Dense(num_classes, activation='softmax'))
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy', keras.metrics.Recall()])
 
 # Train the mode
-model.fit(train_generator, epochs=5 , validation_data=validation_generator)
+model.fit(train_generator, epochs=1)
 
 # Evaluate the model
 print(model.evaluate(test_generator))
