@@ -20,6 +20,7 @@ for subdir in image_subdirs:
         newdir = image_home + subdir + labldir
         makedirs(newdir, exist_ok=True)
 
+
 train_ratio = 0.70
 val_ratio = 0.85
 for labldir in labeldirs:

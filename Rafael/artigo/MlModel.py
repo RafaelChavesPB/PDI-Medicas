@@ -67,7 +67,7 @@ model.add(Dense(num_classes, activation='softmax'))
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy', keras.metrics.Recall()])
 
 # Train the mode
-model.fit(train_generator, epochs=1, validation_data=validation_generator)
+model.fit(train_generator, epochs=5 , validation_data=validation_generator)
 
 # Evaluate the model
 print(model.evaluate(test_generator))

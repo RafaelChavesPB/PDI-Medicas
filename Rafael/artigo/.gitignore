@@ -1,3 +1,5 @@
 venv
 dicom-files
 files
+.tool-versions
+cudnn*
